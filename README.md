@@ -33,7 +33,7 @@ If running the above command on SteamOS 3.x, the default distro of the Steam Dec
 
 For example: `./patch-sciadv.sh 1111390 RNDPatch-v1.0.4-Setup RNDPatch-Installer.exe deck`.
 
-As part of the execution of this script, the GUI installer should launch. Follow the instruction in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:\home\<Username>\.local\share\Steam/steamapps/common/<Game>`, replaceing <Username> with your Linux username and <Game> with the name of the folder containing the game. Yes, the backslashes and forwardslashes are supposed to be mixed like that. Yes, it is cursed. #BlameMicrosoft
+As part of the execution of this script, the GUI installer should launch. Follow the instruction in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:\home\<Username>\.local\share\Steam/steamapps/common/<Game>`, replacing <Username> with your Linux username and <Game> with the name of the folder containing the game. Yes, the backslashes and forwardslashes are supposed to be mixed like that. Yes, it is cursed. #BlameMicrosoft
 
 For example, on the Steam Deck: `Z:\home\deck\.local\share\Steam/steamapps/common/Robotics;Notes DaSH`.
 
