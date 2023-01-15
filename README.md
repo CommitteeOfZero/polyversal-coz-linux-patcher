@@ -33,18 +33,20 @@ If running the above command on SteamOS 3.x, the default distro of the Steam Dec
 
 For example: `./patch-sciadv.sh 1111390 RNDPatch-v1.0.4-Setup RNDPatch-Installer.exe deck`.
 
-As part of the execution of this script, the GUI installer should launch. Follow the instruction in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:\home\<Username>\.local\share\Steam/steamapps/common/<Game>`, replacing <Username> with your Linux username and <Game> with the name of the folder containing the game. Yes, the backslashes and forwardslashes are supposed to be mixed like that. Yes, it is cursed. #BlameMicrosoft
+As part of the execution of this script, the GUI installer should launch. Follow the instructions in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing <Username> with your Linux username and <Game> with the name of the folder containing the game.
 
-For example, on the Steam Deck: `Z:\home\deck\.local\share\Steam/steamapps/common/Robotics;Notes DaSH`.
+For example, on the Steam Deck: `Z:/home/deck/.local/share/Steam/steamapps/common/Robotics;Notes DaSH`.
 
-Then, go back to Steam and launch the game. It should now be patched. *sips tea*
+Then, go back to Steam and launch the game. It should now be patched.
 
-**Note**: For some reason, executing this script tends to render the terminal that ran the commands unable to run any further commands&mdash;on both Arch Linux and SteamOS 3.x on the Steam Deck. We have no idea why; but if you close the terminal after execution and open a new one, things should run as usual once more.
+**Note**: Executing this script renders the terminal that ran the commands unable to run any further commands&mdash;on both Arch Linux and SteamOS 3.x on the Steam Deck. This is expected behavior. If you close the terminal after execution and open a new one, you will be able to access the terminal once more. Of course, after the successful installation of the patch, the terminal is unnecessary to run the patched game.
+
+## Known Limitations
+
+*Steins;Gate* launches the default launcher of the game upon clicking or pressing "Play" in Steam. The CoZ's custom launcher that is installed as part of the patch will open as soon as the default launcher is closed. Unfortunately, this means that launching the game through the default launcher first launches the game, then the custom launcher.
 
 ## Troubleshooting
 
-If you run into any problems with this script (or if it simply doesn't work for you at all), feel free to file an issue on this repository or ask about it in the CoZ Discord server.
-
-Also: It's quite possible that there are edge cases that this script does not account for games that require an additional override for a Windows DLL in Protontricks. If you know of any of these, we'll add them to the script as we are made aware. Since the script is dependent on Steam AppIDs anyway, it shouldn't be too challenging to add support for specific games through conditional statements.
+If your run into any problems executing the multiversal patcher, please feel free to file an issue or PR in relation. However, know that if the issue is distro-specific, the development team does not have access to every conceivable Linux distro. PRs are welcomed to address these issues so that as many players can experience the patched SciADV games as seamlessly as possible.
 
 *whose eyes are those eyes*
