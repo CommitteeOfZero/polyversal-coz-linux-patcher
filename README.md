@@ -8,7 +8,7 @@ These instructions and the included Bash script are intended to streamline insta
 
 If you have an existing installation the game using a Proton version other than Valve Proton 7 (Proton 7.0-5 or later, to be specific), you will need to wipe the Proton prefix prior to beginning [preparation](#preparations). You should back up your saved games to another directory prior to wiping the prefix; this helps avoid any potential issues caused by a malfunction in the implementation of Steam Cloud saves for the title in question. You can move the saved games back into the Proton prefix after [running the multiversal patcher](#running-the-multiversal-patcher).
 
-## Preparatop,
+## Preparations
 
 1. [Download the patch](http://sonome.dareno.me/projects) and ensure it remains in your Downloads folder (as that is the folder this script expects to find the patch in).
 2. Extract the files from the archive into the Downloads folder with the command `unzip ~/Downloads/<PatchName.zip> -d ~/Downloads`, replacing <PatchName.zip> with the name of the archive containing the patch.
