@@ -1,12 +1,12 @@
 # Multiversal CoZ Linux patcher
 
-These instructions are for running the games from the Linux Steam client using Steam Play or the Steam Deck.
+These instructions and the included Bash script are intended to streamline installation of CoZ patches for Steam Play, including on Steam Deck.
 
 *This script is possible in no small part due to the work of [/u/PartTimeBento](https://www.reddit.com/u/PartTimeBento), who [provided many of the necessary instructions to automate this in a post on Reddit](https://www.reddit.com/r/SteamDeck/comments/uitpca/patching_steinsgate_and_steinsgate0_on_the).*
 
 ## Backing up saved games and wiping a Proton prefix
 
-If you have an existing installation the game using a Proton version other than Valve Proton 7 (Proton 7.0-5 or later, to be specific), you will need to wipe the Proton prefix prior to beginning [preparation](#preparations). You should back up your saved games to another directory prior to wiping the prefix; this helps avoid any potential issues caused by a malfunction in the Steam Cloud saves' implementation. You can move the saved games back into the Proton prefix after [running the multiversal patcher](#running-the-multiversal-patcher).
+If you have an existing installation the game using a Proton version other than Valve Proton 7 (Proton 7.0-5 or later, to be specific), you will need to wipe the Proton prefix prior to beginning [preparation](#preparations). You should back up your saved games to another directory prior to wiping the prefix; this helps avoid any potential issues caused by a malfunction in the implementation of Steam Cloud saves for the title in question. You can move the saved games back into the Proton prefix after [running the multiversal patcher](#running-the-multiversal-patcher).
 
 ## Preparatop,
 
@@ -16,7 +16,7 @@ If you have an existing installation the game using a Proton version other than 
 3. Download and install the related game from Steam.
 4. Set the game's compatibility tool to the latest official Valve Proton 7 (Proton 7.0-5 at time of writing).
 5. Launch the game once in order to generate a Proton prefix, then quit the game.
-6. Either clone this Git repository or download an archive of its contents, then extract the files. Whichever way you do it, ensure the script ends up either in your Linux home directory or a subfolder of it.
+6. Clone this Git repository or download an archive of its contents, then extract the files. Ensure the script ends up either in your Linux home directory or a subfolder of it.
 7. Navigate to the folder containing the file `patch-sciadv.sh`.
 
 ## Running the multiversal patcher
@@ -62,4 +62,4 @@ Here you can find a table of all the SciADV games which have received patches, a
 
 ## Troubleshooting
 
-If you run into any problems executing the multiversal patcher, please feel free to file an issue or PR in relation. However, know that if the issue is distro-specific, the development team does not have access to every Linux distro.
+If you run into any problems executing the multiversal patcher, please feel free to file an issue or pull request in relation. The multiversal patcher has been tested on both Arch Linux and SteamOS 3.x, so pull requests to address issues specific to other Linux distributions are especially appreciated.
