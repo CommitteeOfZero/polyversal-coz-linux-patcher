@@ -60,6 +60,22 @@ Here you can find a table of all the SciADV games which have received patches, a
 
 *STEINS;GATE* launches the default launcher of the game upon clicking or pressing "Play" in Steam. The Committee of Zero's custom launcher that is installed as part of the patch will open as soon as the default launcher is closed. Unfortunately, this means that launching the game through the default launcher first launches the game, then the custom launcher.
 
+A manual fix for this issue is to rename the default launcher in the game's Steam directory to something else, and then create a symlink to the custom launcher so that the game directly launches the patch without going through the original. In actionable commands:
+
+```sh
+cd "$HOME/.local/share/Steam/steamapps/common/STEINS;GATE"
+mv Launcher.exe Launcher.exe.bkp
+ln -s LauncherC0.exe Launcher.exe
+```
+
+Unfortunately, this is not so easily automated with the Multiversal installation script: uninstalling the patch with `nguninstall.exe` in the Steam directory must return the game folder to its original, unpatched state, and undoing these naming changes is not a part of its functionality. Fortunately, doing so manually is a simple process. **To avoid potential issues, make sure to run the below commands _before_ uninstalling the patch,** if you decide to do so :(
+
+```sh
+cd "$HOME/.local/share/Steam/steamapps/common/STEINS;GATE"
+unlink Launcher.exe
+mv Launcher.exe.bkp Launcher.exe
+```
+
 ## Troubleshooting
 
 If you run into any problems executing the multiversal patcher, please feel free to file an issue or pull request in relation. The multiversal patcher has been tested on both Arch Linux and SteamOS 3.x, so pull requests to address issues specific to other Linux distributions are especially appreciated.
