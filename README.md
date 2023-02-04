@@ -30,13 +30,6 @@ On a traditional Linux OS, run this script with the following command entered in
 
 For example: `./patch-sciadv.sh 1961950 CHNSteamPatch-v1.0.0-Setup CHNSteamPatch-Installer.exe`.
 
-If running the above command on SteamOS 3.x, the default distro of the Steam Deck, instead use:  
-```sh
-./patch-sciadv.sh <AppID> <PatchDirectory> <PatchInstaller.exe> deck
-```
-
-For example: `./patch-sciadv.sh 1961950 CHNSteamPatch-v1.0.0-Setup CHNSteamPatch-Installer.exe deck`.
-
 As part of the execution of this script, the GUI installer should launch. Follow the instructions in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing <Username> with your Linux username and <Game> with the name of the folder containing the game.
 
 For example, on the Steam Deck: `Z:/home/deck/.local/share/Steam/steamapps/common/CHAOS;HEAD NOAH`.
