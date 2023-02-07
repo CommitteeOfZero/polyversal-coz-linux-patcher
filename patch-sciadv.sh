@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Deck detection
-if [[ $(lsb_release -d) =~ "SteamOS Holo" ]]; then deck=1; fi
+if [[ $(cat /etc/os-release | grep "VERSION_CODENAME=holo") ]]; then deck=1; fi
 
 # Set up and install Protontricks
 flatpak install com.github.Matoking.protontricks
