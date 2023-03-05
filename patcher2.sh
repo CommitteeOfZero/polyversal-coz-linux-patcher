@@ -70,26 +70,32 @@ case $(tolower "$1") in
   'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
     appid=1961950
     patch_exe='CHNSteamPatch-Installer.exe'
+    steamgrid=1
     ;;
   'sg' | 'steins'[\;\ ]'gate')
     appid=412830
     patch_exe='SGPatch-Installer.exe'
+    steamgrid=0
     ;;
   'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
     appid=1111380
     patch_exe='RNEPatch-Installer.exe'
+    steamgrid=0
     ;;
   'cc' | 'chaos'[\;\ ]'child')
     appid=970570
     patch_exe='CCPatch-Installer.exe'
+    steamgrid=0
     ;;
   'sg0' | '0' | 'steins'[\;\ ]'gate 0')
     appid=825630
     patch_exe='SG0Patch-Installer.exe'
+    steamgrid=0
     ;;
   'rnd' | 'dash' | 'robotics'[\;\ ]'notes dash')
     appid=1111390
     patch_exe='RNDPatch-Installer.exe'
+    steamgrid=0
     ;;
   *)
     log_msg err "shortname '$1' is invalid"
@@ -98,7 +104,7 @@ case $(tolower "$1") in
     ;;
 esac
 
-log_msg info "using app ID '$appid', expecting patch EXE name '$patch_exe' ..."
+log_msg info "using app ID '$appid', expecting patch EXE name '$patch_exe', has custom steam grid images '$steamgrid' ..."
 
 
 # Make sure the patch directory ($2) is valid.
@@ -133,7 +139,6 @@ if is_relpath "$2"; then
     patch_dir="$(pwd)/$2"
   fi
 fi
-
 
 # Detect whether the machine is a Steam Deck.
 is_deck=
@@ -171,6 +176,27 @@ else
   # now, FP Protontricks gives the user a prompt telling it which folder to give
   # access to anyway, so it's not too big of an issue as long as the user can
   # (a) read, and (b) copy and paste a single command.
+fi
+
+
+# CHN CoZ patch includes custom SteamGrid images, but since the patch is built for
+# Windows, the placement of those files ends up happening within the Wine prefix 
+# instead of the system-level Steam install. The following code will detect the 
+# STEAMGRID folder within the patch directory, and if it exists, copy any *.png 
+# files at its root to Steam userdata/<user_id>/config/grid within a default Steam 
+# path install ($HOME/.local/share/Steam)
+#
+# TODO: Add support for flatpak Steam installs.
+if [ $steamgrid -eq 1 ]; then
+  if [[ $(ls -d "$HOME/.local/share/Steam/userdata/"*/config/grid) ]]; then
+    echo -n "Copying custom grid images..."
+    for grid_dir in $(ls -d "$HOME/.local/share/Steam/userdata/"*/config/grid); do
+      $(cp "$patch_dir/STEAMGRID/"*.png "$grid_dir/")
+    done
+    echo "OK."
+  fi
+else
+  echo "Title does not containt custom SteamGrid images. Skipping... OK."
 fi
 
 
