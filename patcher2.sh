@@ -25,9 +25,39 @@ function is_cmd() {
   command -v "$1" > /dev/null
 }
 
+# I like colors. `tput` seems fairly portable, so it's used here to dictate
+# logging capabilities. Only log with colors if `tput` is available, stderr
+# outputs to a terminal, and it supports 8 or more colors.
+if is_cmd tput && test -t 2 && [[ "$(tput colors)" -ge 8 ]]; then
+  txt_normal="$(tput sgr0)"
+  txt_yellow="$(tput setaf 3)"
+  txt_red="$(tput setaf 1)"
+fi
+
+# log <info|warn|err> <message>
+function log_msg() {
+  case "$1" in
+    'warn' | 'w')
+      sevpfx="${txt_yellow}WARN:"
+      ;;
+    'error' | 'err' | 'e')
+      sevpfx="${txt_red}ERR:"
+      ;;
+    'info' | 'i')
+      sevpfx="INFO:"
+      ;;
+    *)
+      # Well I don't necessarily want the program to die immediately, so just do
+      # whatever ig
+      sevpfx="$1:"
+      ;;
+  esac
+  echo "${sevpfx} ${@:2}${txt_normal}" >&2
+}
+
 
 if [[ $# -ne 2 ]]; then
-  echo "ERR: expected 2 args, got $#" >&2
+  log_msg err "expected 2 args, got $#"
   print_usage
   exit 1
 fi
@@ -62,12 +92,13 @@ case $(tolower "$1") in
     patch_exe='RNDPatch-Installer.exe'
     ;;
   *)
-    echo "ERR: shortname '$1' is invalid" >&2
+    log_msg err "shortname '$1' is invalid"
     print_usage
     exit 1
+    ;;
 esac
 
-echo "using app ID '$appid', expecting patch EXE name '$patch_exe' ..." >&2
+log_msg info "using app ID '$appid', expecting patch EXE name '$patch_exe' ..."
 
 
 # Make sure the patch directory ($2) is valid.
@@ -75,12 +106,12 @@ echo "using app ID '$appid', expecting patch EXE name '$patch_exe' ..." >&2
 # (1) it exists, and
 # (2) it contains the expected patch EXE file to execute
 if [[ ! -d "$2" ]]; then
-  echo "ERR: directory '$2' does not exist" >&2
+  log_msg err "directory '$2' does not exist"
   exit 1
 fi
 
 if [[ ! -f "$2/$patch_exe" ]]; then
-  echo "ERR: expected patch EXE '$patch_exe' does not exist within directory '$2'" >&2
+  log_msg err "expected patch EXE '$patch_exe' does not exist within directory '$2'"
   exit 1
 fi
 
@@ -96,9 +127,9 @@ if is_relpath "$2"; then
   if is_cmd realpath; then
     patch_dir=$(realpath "$2")
   else
-    echo "WARN: 'realpath' not available as a command." >&2
-    echo "WARN: attempting to manually set absolute path; this might cause issues." >&2
-    echo "WARN: if you get an error citing a non-existent file or directory, try supplying the path to the patch directory as absolute or homedir-relative." >&2
+    log_msg warn "'realpath' not available as a command."
+    log_msg warn "attempting to manually set absolute path; this might cause issues."
+    log_msg warn "if you get an error citing a non-existent file or directory, try supplying the path to the patch directory as absolute or homedir-relative."
     patch_dir="$(pwd)/$2"
   fi
 fi
@@ -108,7 +139,7 @@ fi
 is_deck=
 if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
   is_deck=1
-  echo "detected Steam Deck environment ..." >&2
+  log_msg info "detected Steam Deck environment ..."
 fi
 
 # We need either system Protontricks or Flatpak Protontricks to work the magic.
@@ -116,16 +147,16 @@ fi
 protontricks_cmd='protontricks'
 fp_protontricks='com.github.Matoking.protontricks'
 if is_cmd protontricks; then
-  echo "detected system install of protontricks ..." >&2
+  log_msg info "detected system install of protontricks ..."
 else
-  echo "system install of protontricks not found. proceeding with flatpak ..." >&2
+  log_msg info "system install of protontricks not found. proceeding with flatpak ..."
   if ! is_cmd flatpak; then
-    echo "ERR: neither flatpak nor system protontricks was detected." >&2
-    echo "     please install one of the two and then try again." >&2
+    log_msg err "neither flatpak nor system protontricks was detected."
+    log_msg err "please install one of the two and then try again."
     exit 1
   fi
   if ! flatpak list | grep -q "$fp_protontricks" -; then
-    echo "WARN: protontricks is not installed on flatpak. attempting installation ..." >&2
+    log_msg warn "protontricks is not installed on flatpak. attempting installation ..."
     flatpak install $fp_protontricks
   fi
   protontricks_cmd="flatpak run $fp_protontricks"
