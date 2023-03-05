@@ -17,6 +17,14 @@ function is_relpath() {
   echo "$1" | grep -qE '^/' - && return 1 || return 0
 }
 
+# `command -v COMMAND` prints information about COMMAND, but importantly has
+# exit status 0 if the command exists and 1 if it does not. This true/false
+# value is what we use in this script to determine whether a command is
+# installed and available on the system.
+function is_cmd() {
+  command -v "$1" > /dev/null
+}
+
 
 if [[ $# -ne 2 ]]; then
   echo "ERR: expected 2 args, got $#" >&2
@@ -29,27 +37,27 @@ fi
 # IDs are available in the README.
 # CoZ's naming conventions are beautifully consistent, pls never change them
 case $(tolower "$1") in
-  'chn' | 'ch' | 'chaos;head noah')
+  'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
     appid=1961950
     patch_exe='CHNSteamPatch-Installer.exe'
     ;;
-  'sg' | 'steins;gate')
+  'sg' | 'steins'[\;\ ]'gate')
     appid=412830
     patch_exe='SGPatch-Installer.exe'
     ;;
-  'rne' | 'rn' | 'robotics;notes elite')
+  'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
     appid=1111380
     patch_exe='RNEPatch-Installer.exe'
     ;;
-  'cc' | 'chaos;child')
+  'cc' | 'chaos'[\;\ ]'child')
     appid=970570
     patch_exe='CCPatch-Installer.exe'
     ;;
-  'sg0' | '0' | 'steins;gate 0')
+  'sg0' | '0' | 'steins'[\;\ ]'gate 0')
     appid=825630
     patch_exe='SG0Patch-Installer.exe'
     ;;
-  'rnd' | 'dash' | 'robotics;notes dash')
+  'rnd' | 'dash' | 'robotics'[\;\ ]'notes dash')
     appid=1111390
     patch_exe='RNDPatch-Installer.exe'
     ;;
@@ -90,11 +98,11 @@ fi
 # Prefer system Protontricks if it exists, since there's less to set up.
 protontricks_cmd='protontricks'
 fp_protontricks='com.github.Matoking.protontricks'
-if command -v 'protontricks' > /dev/null; then
+if is_cmd protontricks; then
   echo "detected system install of protontricks ..." >&2
 else
   echo "system install of protontricks not found. proceeding with flatpak ..." >&2
-  if ! command -v 'flatpak' > /dev/null; then
+  if ! is_cmd flatpak; then
     echo "ERR: neither flatpak nor system protontricks was detected." >&2
     echo "     please install one of the two and then try again." >&2
     exit 1
@@ -117,7 +125,7 @@ else
     # Detect if patch dir was not provided as absolute path.
     # '~[user]/' is expanded to be absolute before script execution.
     if is_relpath "$patch_dir"; then
-      if command -v 'realpath'; then
+      if is_cmd realpath; then
         fpfs=$(realpath "$patch_dir")
       else
         echo "WARN: 'realpath' command not available for provided relative path." >&2
@@ -126,7 +134,7 @@ else
       fi
     fi
   fi
-  flatpak override --user --filesystem="$fpfs"
+  flatpak override --user --filesystem="$fpfs" $fp_protontricks
 fi
 
 
