@@ -84,7 +84,24 @@ if [[ ! -f "$2/$patch_exe" ]]; then
   exit 1
 fi
 
+# Since we're running `cd` from within protontricks, we need to get the absolute
+# path to the patch directory. Relative paths won't work for this since testing
+# shows that the shell invoked by `protontricks -c` sets its CWD to the game's
+# directory.
+# Prefer `realpath` to do the job, but if it's not available then get it by
+# concatenating the user's CWD and the relative path. Simple testing shows that
+# this hack does not work on Flatpak Protontricks.
 patch_dir="$2"
+if is_relpath "$2"; then
+  if is_cmd realpath; then
+    patch_dir=$(realpath "$2")
+  else
+    echo "WARN: 'realpath' not available as a command." >&2
+    echo "WARN: attempting to manually set absolute path; this might cause issues." >&2
+    echo "WARN: if you get an error citing a non-existent file or directory, try supplying the path to the patch directory as absolute or homedir-relative." >&2
+    patch_dir="$(pwd)/$2"
+  fi
+fi
 
 
 # Detect whether the machine is a Steam Deck.
@@ -95,7 +112,7 @@ if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
 fi
 
 # We need either system Protontricks or Flatpak Protontricks to work the magic.
-# Prefer system Protontricks if it exists, since there's less to set up.
+# Prefer system Protontricks if it exists since there's less to set up.
 protontricks_cmd='protontricks'
 fp_protontricks='com.github.Matoking.protontricks'
 if is_cmd protontricks; then
@@ -113,32 +130,20 @@ else
   fi
   protontricks_cmd="flatpak run $fp_protontricks"
 
-  # Need to grant flatpak protontricks access to the patch directory.  This path
-  # can only either be given as an absolute or homedir-relative path, which $2
-  # may not have been supplied as.
-  # If it's a normal relative path, get an absolute path by concatenating the
-  # current working directory and the relative path.
-  if [[ $is_deck ]]; then
-    fpfs='/run/media/'
-  else
-    fpfs="$patch_dir"
-    # Detect if patch dir was not provided as absolute path.
-    # '~[user]/' is expanded to be absolute before script execution.
-    if is_relpath "$patch_dir"; then
-      if is_cmd realpath; then
-        fpfs=$(realpath "$patch_dir")
-      else
-        echo "WARN: 'realpath' command not available for provided relative path." >&2
-        echo "      attempting to manually set absolute path; this might cause issues." >&2
-        fpfs="$(pwd)/$patch_dir"
-      fi
-    fi
-  fi
-  flatpak override --user --filesystem="$fpfs" $fp_protontricks
+  # Flatpak Protontricks has to be given access to the game's Steam folder to
+  # make changes. On Deck this is (hopefully) as easy as giving it access to all
+  # of its mounts and partitions; on PC, this could involve some tricky parsing
+  # of VDF files to give it access to different library folders.
+  [[ $is_deck ]] && flatpak override --user --filesystem=/run/media/ $fp_protontricks
+
+  # TODO: parse VDF files to give it access to different library folders. For
+  # now, FP Protontricks gives the user a prompt telling it which folder to give
+  # access to anyway, so it's not too big of an issue as long as the user can
+  # (a) read, and (b) copy and paste a single command.
 fi
 
 
 # Patch the game
 compat_mts=
-[[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media"
+[[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
 $protontricks_cmd -c "cd $patch_dir && $compat_mts wine $patch_exe" $appid
