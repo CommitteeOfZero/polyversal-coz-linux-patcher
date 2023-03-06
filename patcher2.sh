@@ -2,7 +2,7 @@
 
 # Usage syntax: `./patcher2.sh GAME_SHORTNAME PATCH_FOLDER_PATH`
 function print_usage() {
-  echo "usage: ./patcher2.sh GAME_SHORTNAME PATCH_FOLDER_PATH" >&2
+  echo "usage: $0 GAME_SHORTNAME PATCH_FOLDER_PATH" >&2
   echo "  shortnames: 'chn', 'sg', 'rne', 'cc', 'sg0', 'rnd'" >&2
 }
 
@@ -28,32 +28,38 @@ function is_cmd() {
 # I like colors. `tput` seems fairly portable, so it's used here to dictate
 # logging capabilities. Only log with colors if `tput` is available, stderr
 # outputs to a terminal, and it supports 8 or more colors.
+txt_normal=''
+txt_yellow=''
+txt_red=''
 if is_cmd tput && test -t 2 && [[ "$(tput colors)" -ge 8 ]]; then
   txt_normal="$(tput sgr0)"
   txt_yellow="$(tput setaf 3)"
   txt_red="$(tput setaf 1)"
 fi
 
-# log <info|warn|err> <message>
+# log_msg <info|warn|err> <message>
 function log_msg() {
-  case "$1" in
+  case $(tolower "$1") in
     'warn' | 'w')
-      sevpfx="${txt_yellow}WARN:"
+      sevpfx="${txt_yellow}$0: WARN:"
       ;;
     'error' | 'err' | 'e')
-      sevpfx="${txt_red}ERR:"
+      sevpfx="${txt_red}$0: ERR:"
       ;;
     'info' | 'i')
-      sevpfx="INFO:"
+      sevpfx="$0: INFO:"
       ;;
     *)
       # Well I don't necessarily want the program to die immediately, so just do
       # whatever ig
-      sevpfx="$1:"
+      sevpfx="$0: $1:"
       ;;
   esac
   echo "${sevpfx} ${@:2}${txt_normal}" >&2
 }
+function log_info() { log_msg info "$@"; }
+function log_warn() { log_msg warn "$@"; }
+function log_err() { log_msg err "$@"; }
 
 
 if [[ $# -ne 2 ]]; then
@@ -66,36 +72,39 @@ fi
 # Get the app ID and what the installer exe should be, based on the shortname.
 # IDs are available in the README.
 # CoZ's naming conventions are beautifully consistent, pls never change them
+steamgrid=
+gamename=
 case $(tolower "$1") in
   'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
     appid=1961950
     patch_exe='CHNSteamPatch-Installer.exe'
+    gamename="Chaos;Head NoAH"
     steamgrid=1
     ;;
   'sg' | 'steins'[\;\ ]'gate')
     appid=412830
     patch_exe='SGPatch-Installer.exe'
-    steamgrid=0
+    gamename="Steins;Gate"
     ;;
   'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
     appid=1111380
     patch_exe='RNEPatch-Installer.exe'
-    steamgrid=0
+    gamename="Robotics;Notes Elite"
     ;;
   'cc' | 'chaos'[\;\ ]'child')
     appid=970570
     patch_exe='CCPatch-Installer.exe'
-    steamgrid=0
+    gamename="Chaos;Child"
     ;;
   'sg0' | '0' | 'steins'[\;\ ]'gate 0')
     appid=825630
     patch_exe='SG0Patch-Installer.exe'
-    steamgrid=0
+    gamename="Steins;Gate 0"
     ;;
   'rnd' | 'dash' | 'robotics'[\;\ ]'notes dash')
     appid=1111390
     patch_exe='RNDPatch-Installer.exe'
-    steamgrid=0
+    gamename="Robotics;Notes DaSH"
     ;;
   *)
     log_msg err "shortname '$1' is invalid"
@@ -104,7 +113,8 @@ case $(tolower "$1") in
     ;;
 esac
 
-log_msg info "using app ID '$appid', expecting patch EXE name '$patch_exe', has custom steam grid images '$steamgrid' ..."
+log_msg info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
+[[ $steamgrid ]] && log_msg info "using custom SteamGrid images ..."
 
 
 # Make sure the patch directory ($2) is valid.
@@ -162,8 +172,12 @@ else
     exit 1
   fi
   if ! flatpak list | grep -q "$fp_protontricks" -; then
-    log_msg warn "protontricks is not installed on flatpak. attempting installation ..."
-    flatpak install $fp_protontricks
+    log_msg info "protontricks is not installed on flatpak. attempting installation ..."
+    if ! flatpak install $fp_protontricks; then
+      log_msg err "an error occurred while installing flatpak protontricks."
+      exit 1
+    fi
+    log_msg info "flatpak protontricks installed successfully"
   fi
   protontricks_cmd="flatpak run $fp_protontricks"
 
@@ -180,6 +194,16 @@ else
 fi
 
 
+# Patch the game
+log_msg info "patching $gamename ..."
+compat_mts=
+[[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
+$protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
+if [[ $? -ne 0 ]]; then
+  log_warn "patch installation exited with nonzero status."
+  log_warn "consult the output for errors."
+fi
+
 # CHN CoZ patch includes custom SteamGrid images, but since the patch is built for
 # Windows, the placement of those files ends up happening within the Wine prefix 
 # instead of the system-level Steam install. The following code will detect the 
@@ -188,20 +212,9 @@ fi
 # path install ($HOME/.local/share/Steam)
 #
 # TODO: Add support for flatpak Steam installs.
-if [ $steamgrid -eq 1 ]; then
-  if [[ $(ls -d "$HOME/.local/share/Steam/userdata/"*/config/grid) ]]; then
-    echo -n "Copying custom grid images..."
-    for grid_dir in $(ls -d "$HOME/.local/share/Steam/userdata/"*/config/grid); do
-      $(cp "$patch_dir/STEAMGRID/"*.png "$grid_dir/")
-    done
-    echo "OK."
-  fi
-else
-  echo "Title does not containt custom SteamGrid images. Skipping... OK."
+if [[ $steamgrid ]]; then
+  log_msg info "copying custom SteamGrid images ..."
+  for grid_dir in "$HOME/.local/share/Steam/userdata/"*/config/grid; do
+    cp "$patch_dir/STEAMGRID/"*.png "$grid_dir/"
+  done
 fi
-
-
-# Patch the game
-compat_mts=
-[[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
-$protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
