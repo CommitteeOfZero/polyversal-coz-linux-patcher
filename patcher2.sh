@@ -140,6 +140,7 @@ if is_relpath "$2"; then
   fi
 fi
 
+
 # Detect whether the machine is a Steam Deck.
 is_deck=
 if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
@@ -203,4 +204,4 @@ fi
 # Patch the game
 compat_mts=
 [[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
-$protontricks_cmd -c "cd $patch_dir && $compat_mts wine $patch_exe" $appid
+$protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
