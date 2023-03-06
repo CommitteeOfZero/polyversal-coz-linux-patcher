@@ -1,6 +1,6 @@
 # Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux
 
-This project is a fork of [CoZ's official Multiversal Linux patcher](https://github.com/Macitron/Polyversal-Linux-CoZ-Patcher/tree/script-overhaul). From the official repository:
+This project is a fork of [CoZ's official Multiversal Linux patcher](https://github.com/CommitteeOfZero/multiversal-coz-linux-patcher). From the official repository:
 
 > These instructions and the included Bash script are intended to streamline installation of CoZ patches for Steam Play, including on Steam Deck.
 > 
@@ -9,7 +9,7 @@ This project is a fork of [CoZ's official Multiversal Linux patcher](https://git
 ## TL;DR
 
 ```sh
-./patcher2.sh <GameShortName> <PatchDir>
+./polyversal.sh <GameShortName> <PatchDir>
 ```
 
 - &lt;GameShortName&gt; is the [game's short name](#game-short-names)
@@ -27,8 +27,8 @@ If you have an existing installation of the game using a Proton version other th
 1. [Download the corresponding patch](https://sonome.dareno.me/projects) for your target game.
 2. Extract the files from the archive and take note of the full path to the extracted directory.
     - There have been reports of Ark extracting files incorrectly; make sure the extracted directory includes a few files whose names start with "Qt5". If GUI extraction proves unsuccessful, consider using [`unzip`](https://linux.die.net/man/1/unzip).
-3. This script utilizes [protontricks](https://github.com/Matoking/protontricks) to correctly apply the patch. If you already have a version of protontricks installed, you are good to go. If you do not, you can follow the link provided to install it yourself, or allow `patcher2.sh` to install the Flatpak version.
-    - To let the script automatically install protontricks, ensure [Flatpak](https://flatpak.org/setup/) is installed on your machine and runnable by your user without root access (if you are not running SteamOS 3.x or another distro that provides Flatpak as part of the OS).
+3. This script utilizes [protontricks](https://github.com/Matoking/protontricks) to correctly apply the patch. If you already have a version of protontricks installed, you are good to go. If you do not, you can follow the link provided to install it yourself, or allow the script to install the Flatpak version.
+    - To allow automatic installation of protontricks, ensure [Flatpak](https://flatpak.org/setup/) is installed on your machine and runnable by your user without root access (if you are not running SteamOS 3.x or another distro that provides Flatpak as part of the OS).
     - Steam Deck users should prefer the Flatpak version.
 4. Download and install the related game from Steam.
 5. Within the game's properties, set its compatibility tool to the latest official Valve Proton 7 (Proton 7.0-6 at time of writing).
@@ -39,16 +39,14 @@ If you have an existing installation of the game using a Proton version other th
 
 ## Usage
 
-*Examples provided use v1.0.2 of the [**CHAOS;HEAD NOAH** Overhaul Patch](http://sonome.dareno.me/projects/chn-patch.html).*
-
 Run the following command entered into your terminal, replacing &lt;GameShortName&gt; with the short name from [the list below](#game-short-names) and &lt;PatchDirectory&gt; with the path to the folder containing the patch. 
 
 ```sh
-./patcher2.sh <GameShortName> <PatchDirectory>
+./polyversal.sh <GameShortName> <PatchDirectory>
 
 # Examples
-./patcher.sh chn ~/Downloads/CHNSteamPatch-v1.0.2-Setup
-./patcher.sh sg0 /home/myname/Games/SG0/SG0Patch-v2.1.3-Setup
+./polyversal.sh chn ~/Downloads/CHNSteamPatch-v1.0.2-Setup
+./polyversal.sh sg0 /home/myname/Games/SG0/SG0Patch-v2.1.3-Setup
 ```
 
 Relative paths are accepted but not guaranteed to work, especially when using Flatpak. Absolute or homedir-relative paths should be preferred.
@@ -99,6 +97,6 @@ mv Launcher.exe.bkp Launcher.exe
 
 ## Troubleshooting
 
-If you run into any problems executing the Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux & Knuckles, please feel free to file an issue or pull request in relation. **Please do not complain to the Committee of Zero directly**: if you need someone to yell at, ping `Macitron3000#0766` on Discord.
+If you run into any problems executing the Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux, please feel free to file an issue or pull request in relation. **Please do not complain to the Committee of Zero directly**: if you need someone to yell at, ping `Macitron3000#0766` on Discord.
 
 The PLSPfCoZSASPoL has been tested on Arch Linux, Fedora 37, and SteamOS 3.x, so pull requests to address issues specific to other Linux distributions are especially appreciated.
