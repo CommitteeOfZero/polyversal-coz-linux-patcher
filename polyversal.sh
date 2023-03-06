@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# Usage syntax: `./patcher2.sh GAME_SHORTNAME PATCH_FOLDER_PATH`
+# Usage syntax: `./polyversal.sh GAME_SHORTNAME PATCH_FOLDER_PATH`
 function print_usage() {
   echo "usage: $0 GAME_SHORTNAME PATCH_FOLDER_PATH" >&2
   echo "  shortnames: 'chn', 'sg', 'rne', 'cc', 'sg0', 'rnd'" >&2
 }
 
-# Want `./patcher2.sh chn` and `./patcher2.sh CHN` to work the same
+# Want `./polyversal.sh chn` and `./polyversal.sh CHN` to work the same
 function tolower() {
   echo "$@" | tr '[:upper:]' '[:lower:]'
 }
