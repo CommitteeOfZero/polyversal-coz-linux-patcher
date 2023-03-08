@@ -12,7 +12,7 @@ This project is a fork of [CoZ's official Multiversal Linux patcher](https://git
 ./polyversal.sh <GameShortName> <PatchDir>
 ```
 
-- &lt;GameShortName&gt; is the [game's short name](#game-short-names)
+- &lt;[GameShortName](#game-short-names)&gt; is the game's abbreviation (`chn`, `sg`, `rne`, `cc`, `sg0`, or `rnd`)
 - &lt;PatchDir&gt; is the path to the extracted patch setup directory, preferably absolute or homedir-relative
 - Have [Protontricks](https://github.com/Matoking/protontricks) or [Flatpak](https://flatpak.org/setup/) installed
 - Use Proton 7 or newer
@@ -29,7 +29,7 @@ If you have an existing installation of the game using a Proton version other th
     - There have been reports of Ark extracting files incorrectly; make sure the extracted directory includes a few files whose names start with "Qt5". If GUI extraction proves unsuccessful, consider using [`unzip`](https://linux.die.net/man/1/unzip).
 3. This script utilizes [protontricks](https://github.com/Matoking/protontricks) to correctly apply the patch. If you already have a version of protontricks installed, you are good to go. If you do not, you can follow the link provided to install it yourself, or allow the script to install the Flatpak version.
     - To allow automatic installation of protontricks, ensure [Flatpak](https://flatpak.org/setup/) is installed on your machine and runnable by your user without root access (if you are not running SteamOS 3.x or another distro that provides Flatpak as part of the OS).
-    - Steam Deck users should prefer the Flatpak version.
+    - Steam Deck users should prefer the Flatpak version, as SteamOS is liable to delete user-installed system software without notice.
 4. Download and install the related game from Steam.
 5. Within the game's properties, set its compatibility tool to the latest official Valve Proton 7 (Proton 7.0-6 at time of writing).
 6. Launch the game once in order to generate a Proton prefix, then quit the game.
@@ -44,12 +44,14 @@ Run the following command entered into your terminal, replacing &lt;GameShortNam
 ```sh
 ./polyversal.sh <GameShortName> <PatchDirectory>
 
-# Examples
+# Examples:
 ./polyversal.sh chn ~/Downloads/CHNSteamPatch-v1.0.2-Setup
 ./polyversal.sh sg0 /home/myname/Games/SG0/SG0Patch-v2.1.3-Setup
 ```
 
 Relative paths are accepted but not guaranteed to work, especially when using Flatpak. Absolute or homedir-relative paths should be preferred.
+
+If you're using Flatpak and have the game in a non-default Steam library folder, Flatpak might complain about not having access permissions. It will spit out a command as part of its output; copy and paste this command in the terminal to grant it the required access and run the script again to resolve this issue.
 
 As part of the execution of this script, the GUI installer should launch. Follow the instructions in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game.
 
