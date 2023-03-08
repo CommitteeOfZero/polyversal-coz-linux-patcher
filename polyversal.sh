@@ -63,7 +63,7 @@ function log_err() { log_msg err "$@"; }
 
 
 if [[ $# -ne 2 ]]; then
-  log_msg err "expected 2 args, got $#"
+  log_err "expected 2 args, got $#"
   print_usage
   exit 1
 fi
@@ -107,14 +107,14 @@ case $(tolower "$1") in
     gamename="Robotics;Notes DaSH"
     ;;
   *)
-    log_msg err "shortname '$1' is invalid"
+    log_err "shortname '$1' is invalid"
     print_usage
     exit 1
     ;;
 esac
 
-log_msg info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
-[[ $steamgrid ]] && log_msg info "using custom SteamGrid images ..."
+log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
+[[ $steamgrid ]] && log_info "using custom SteamGrid images ..."
 
 
 # Make sure the patch directory ($2) is valid.
@@ -122,19 +122,18 @@ log_msg info "patching $gamename using app ID $appid, expecting patch EXE name '
 # (1) it exists, and
 # (2) it contains the expected patch EXE file to execute
 if [[ ! -d "$2" ]]; then
-  log_msg err "directory '$2' does not exist"
+  log_err "directory '$2' does not exist"
   exit 1
 fi
 
 if [[ ! -f "$2/$patch_exe" ]]; then
-  log_msg err "expected patch EXE '$patch_exe' does not exist within directory '$2'"
+  log_err "expected patch EXE '$patch_exe' does not exist within directory '$2'"
   exit 1
 fi
 
 # Since we're running `cd` from within protontricks, we need to get the absolute
-# path to the patch directory. Relative paths won't work for this since testing
-# shows that the shell invoked by `protontricks -c` sets its CWD to the game's
-# directory.
+# path to the patch directory. Relative paths won't work for this since the
+# shell invoked by `protontricks -c` sets its CWD to the game's directory.
 # Prefer `realpath` to do the job, but if it's not available then get it by
 # concatenating the user's CWD and the relative path. Simple testing shows that
 # this hack does not work on Flatpak Protontricks.
@@ -143,9 +142,9 @@ if is_relpath "$2"; then
   if is_cmd realpath; then
     patch_dir=$(realpath "$2")
   else
-    log_msg warn "'realpath' not available as a command."
-    log_msg warn "attempting to manually set absolute path; this might cause issues."
-    log_msg warn "if you get an error citing a non-existent file or directory, try supplying the path to the patch directory as absolute or homedir-relative."
+    log_warn "'realpath' not available as a command."
+    log_warn "attempting to manually set absolute path; this might cause issues."
+    log_warn "if you get an error citing a non-existent file or directory, try supplying the path to the patch directory as absolute or homedir-relative."
     patch_dir="$(pwd)/$2"
   fi
 fi
@@ -155,7 +154,7 @@ fi
 is_deck=
 if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
   is_deck=1
-  log_msg info "detected Steam Deck environment ..."
+  log_info "detected Steam Deck environment ..."
 fi
 
 # We need either system Protontricks or Flatpak Protontricks to work the magic.
@@ -163,21 +162,21 @@ fi
 protontricks_cmd='protontricks'
 fp_protontricks='com.github.Matoking.protontricks'
 if is_cmd protontricks; then
-  log_msg info "detected system install of protontricks ..."
+  log_info "detected system install of protontricks ..."
 else
-  log_msg info "system install of protontricks not found. proceeding with flatpak ..."
+  log_info "system install of protontricks not found. proceeding with flatpak ..."
   if ! is_cmd flatpak; then
-    log_msg err "neither flatpak nor system protontricks was detected."
-    log_msg err "please install one of the two and then try again."
+    log_err "neither flatpak nor system protontricks was detected."
+    log_err "please install one of the two and then try again."
     exit 1
   fi
   if ! flatpak list | grep -q "$fp_protontricks" -; then
-    log_msg info "protontricks is not installed on flatpak. attempting installation ..."
+    log_info "protontricks is not installed on flatpak. attempting installation ..."
     if ! flatpak install $fp_protontricks; then
-      log_msg err "an error occurred while installing flatpak protontricks."
+      log_err "an error occurred while installing flatpak protontricks."
       exit 1
     fi
-    log_msg info "flatpak protontricks installed successfully"
+    log_info "flatpak protontricks installed successfully"
   fi
   protontricks_cmd="flatpak run $fp_protontricks"
 
@@ -195,7 +194,7 @@ fi
 
 
 # Patch the game
-log_msg info "patching $gamename ..."
+log_info "patching $gamename ..."
 compat_mts=
 [[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
 $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
@@ -213,7 +212,7 @@ fi
 #
 # TODO: Add support for flatpak Steam installs.
 if [[ $steamgrid ]]; then
-  log_msg info "copying custom SteamGrid images ..."
+  log_info "copying custom SteamGrid images ..."
   for grid_dir in "$HOME/.local/share/Steam/userdata/"*/config/grid; do
     cp "$patch_dir/STEAMGRID/"*.png "$grid_dir/"
   done
