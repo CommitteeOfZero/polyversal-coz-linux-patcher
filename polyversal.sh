@@ -8,7 +8,7 @@ function print_usage() {
 
 # Want `./polyversal.sh chn` and `./polyversal.sh CHN` to work the same
 function tolower() {
-  echo "$@" | tr '[:upper:]' '[:lower:]'
+  echo "$*" | tr '[:upper:]' '[:lower:]'
 }
 
 # Returns whether the argument is a relative path or not, based solely on
@@ -55,11 +55,11 @@ function log_msg() {
       sevpfx="$0: $1:"
       ;;
   esac
-  echo "${sevpfx} ${@:2}${txt_normal}" >&2
+  echo "${sevpfx} ${*:2}${txt_normal}" >&2
 }
-function log_info() { log_msg info "$@"; }
-function log_warn() { log_msg warn "$@"; }
-function log_err() { log_msg err "$@"; }
+function log_info() { log_msg info "$*"; }
+function log_warn() { log_msg warn "$*"; }
+function log_err() { log_msg err "$*"; }
 
 
 if [[ $# -ne 2 ]]; then
@@ -72,14 +72,14 @@ fi
 # Get the app ID and what the installer exe should be, based on the shortname.
 # IDs are available in the README.
 # CoZ's naming conventions are beautifully consistent, pls never change them
-steamgrid=
+has_steamgrid=
 gamename=
 case $(tolower "$1") in
   'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
     appid=1961950
     patch_exe='CHNSteamPatch-Installer.exe'
     gamename="Chaos;Head NoAH"
-    steamgrid=1
+    has_steamgrid=1
     ;;
   'sg' | 'steins'[\;\ ]'gate')
     appid=412830
@@ -114,7 +114,7 @@ case $(tolower "$1") in
 esac
 
 log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
-[[ $steamgrid ]] && log_info "using custom SteamGrid images ..."
+[[ $has_steamgrid ]] && log_info "using custom SteamGrid images ..."
 
 
 # Make sure the patch directory ($2) is valid.
@@ -197,8 +197,8 @@ fi
 log_info "patching $gamename ..."
 compat_mts=
 [[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
-$protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
-if [[ $? -ne 0 ]]; then
+if ! $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
+then
   log_warn "patch installation exited with nonzero status."
   log_warn "consult the output for errors."
 fi
@@ -211,7 +211,7 @@ fi
 # path install ($HOME/.local/share/Steam)
 #
 # TODO: Add support for flatpak Steam installs.
-if [[ $steamgrid ]]; then
+if [[ $has_steamgrid ]]; then
   log_info "copying custom SteamGrid images ..."
   for grid_dir in "$HOME/.local/share/Steam/userdata/"*/config/grid; do
     cp "$patch_dir/STEAMGRID/"*.png "$grid_dir/"
