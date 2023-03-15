@@ -116,8 +116,6 @@ if [[ $# -eq 0 ]]; then
   arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $gamename" \
       --directory --filename "$HOME/Downloads")
   handle_zenity $? "You must select the directory containing the patch for the script to work."
-  echo "arg_game = $arg_game"
-  echo "arg_patchdir = $arg_patchdir"
 elif [[ $# -eq 2 ]]; then
   arg_game="$1"
   arg_patchdir="$2"
