@@ -9,13 +9,17 @@ This project is a fork of [CoZ's official Multiversal Linux patcher](https://git
 ## TL;DR
 
 ```sh
+# GUI mode
+./polyversal.sh
+
+# CLI mode
 ./polyversal.sh <GameShortName> <PatchDir>
 ```
 
-- &lt;[GameShortName](#game-short-names)&gt; is the game's abbreviation (`chn`, `sg`, `rne`, `cc`, `sg0`, or `rnd`)
-- &lt;PatchDir&gt; is the path to the extracted patch setup directory, preferably absolute or homedir-relative
 - Have [Protontricks](https://github.com/Matoking/protontricks) or [Flatpak](https://flatpak.org/setup/) installed
 - Use Proton 7 or newer
+- &lt;[GameShortName](#game-short-names)&gt; is the game's abbreviation
+- &lt;PatchDir&gt; is the path to the extracted patch setup directory, preferably absolute or homedir-relative
 
 
 ## Backing up saved games and wiping a Proton prefix
@@ -39,7 +43,21 @@ If you have an existing installation of the game using a Proton version other th
 
 ## Usage
 
-Run the following command entered into your terminal, replacing &lt;GameShortName&gt; with the short name from [the list below](#game-short-names) and &lt;PatchDirectory&gt; with the path to the folder containing the patch. 
+This script features both a GUI and a CLI mode; the easiest option for most people will likely be the GUI mode.
+
+### GUI
+
+To run the script in GUI mode, simply invoke it with no arguments.
+
+```sh
+./polyversal.sh
+```
+
+During execution, two pop-ups will appear for you to specify the target game and the location of the directory containing the patch.
+
+### CLI
+
+To run the script in CLI mode, invoke it with two arguments as shown below, replacing &lt;GameShortName&gt; with the short name from [the list below](#game-short-names) and &lt;PatchDirectory&gt; with the path to the folder containing the patch.
 
 ```sh
 ./polyversal.sh <GameShortName> <PatchDirectory>
@@ -49,11 +67,13 @@ Run the following command entered into your terminal, replacing &lt;GameShortNam
 ./polyversal.sh sg0 /home/myname/Games/SG0/SG0Patch-v2.1.3-Setup
 ```
 
-Relative paths are accepted but not guaranteed to work, especially when using Flatpak. Absolute or homedir-relative paths should be preferred.
+Relative paths are accepted but not guaranteed to work, especially when using Flatpak.[^relpaths] Absolute or homedir-relative paths should be preferred.
+
+### General Notes
 
 If you're using Flatpak and have the game in a non-default Steam library folder, Flatpak might complain about not having access permissions. It will spit out a command as part of its output; copy and paste this command in the terminal to grant it the required access and run the script again to resolve this issue.
 
-As part of the execution of this script, the GUI installer should launch. Follow the instructions in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game.
+As part of the execution of this script, a GUI for the actual patch installer should launch. Follow the instructions in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game.
 
 For example, on the Steam Deck: `Z:/home/deck/.local/share/Steam/steamapps/common/CHAOS;HEAD NOAH`.
 
@@ -63,7 +83,7 @@ Then, go back to Steam and launch the game. It should now be patched. Confirm th
 
 ## Game Short Names
 
-Here you can find a table of all the SciADV games which have received patches and their corresponding short name required by the patcher script. The app ID is also provided as a quick reference for compatdata folders.
+Here you can find a table of all the SciADV games which have received patches and their corresponding short name required by the script's CLI mode. The app ID is also provided as a quick reference for compatdata folders.
 
 | **Game**              | **Short Name** | **App ID** |
 | ----------------      |:--------------:|:----------:|
@@ -102,3 +122,5 @@ mv Launcher.exe.bkp Launcher.exe
 If you run into any problems executing the Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux, please feel free to file an issue or pull request in relation. **Please do not complain to the Committee of Zero directly**: if you need someone to yell at, ping `Macitron3000#0766` on Discord.
 
 The PLSPfCoZSASPoL has been tested on Arch Linux, Fedora 37, and SteamOS 3.x, so pull requests to address issues specific to other Linux distributions are especially appreciated.
+
+[^relpaths]: Specifically, relative paths fail to work in the case when Flatpak Protontricks is being used and `realpath` is not available as a command. Steam Deck does have `realpath` available, so in most use cases it should be fine.
