@@ -2,13 +2,22 @@
 
 # Usage syntax: `./polyversal.sh GAME_SHORTNAME PATCH_FOLDER_PATH`
 function print_usage() {
-  echo "usage: $0 GAME_SHORTNAME PATCH_FOLDER_PATH" >&2
-  echo "  shortnames: 'chn', 'sg', 'rne', 'cc', 'sg0', 'rnd'" >&2
+  cat << EOF >&2
+Usage:
+ GUI:
+  $0
+ CLI:
+  $0 <game_shortname> <patch_folder_path>
+
+Game shortnames:
+  'chn', 'sg', 'rne', 'cc', 'sg0', 'rnd'
+
+EOF
 }
 
 # Want `./polyversal.sh chn` and `./polyversal.sh CHN` to work the same
 function tolower() {
-  echo "$@" | tr '[:upper:]' '[:lower:]'
+  echo "$*" | tr '[:upper:]' '[:lower:]'
 }
 
 # Returns whether the argument is a relative path or not, based solely on
@@ -55,15 +64,67 @@ function log_msg() {
       sevpfx="$0: $1:"
       ;;
   esac
-  echo "${sevpfx} ${@:2}${txt_normal}" >&2
+  echo "${sevpfx} ${*:2}${txt_normal}" >&2
 }
-function log_info() { log_msg info "$@"; }
-function log_warn() { log_msg warn "$@"; }
-function log_err() { log_msg err "$@"; }
+function log_info() { log_msg info "$*"; }
+function log_warn() { log_msg warn "$*"; }
+function log_err() { log_msg err "$*"; }
+
+# Handle non-zero exit statuses from Zenity.
+# **Must be called immediately after zenity command.**
+# Single optional argument is the message to be displayed in the case that the
+# user closes the window.
+function handle_zenity() {
+  zen_ret=$?
+  closedmsg="$*"
+  [[ ! "$closedmsg" ]] && closedmsg="You must select an option."
+  case $zen_ret in
+    1)
+      log_err "$closedmsg"
+      exit 1
+      ;;
+    5)
+      log_err "The input dialogue timed out."
+      exit 1
+      ;;
+    -1)
+      log_err "An unexpected error occurred using Zenity."
+      exit 1
+      ;;
+  esac
+}
 
 
-if [[ $# -ne 2 ]]; then
-  log_err "expected 2 args, got $#"
+arg_game=
+arg_patchdir=
+if [[ $# -eq 0 ]]; then
+  # Assume GUI mode
+  if ! is_cmd zenity; then
+    log_err "Zenity is required to run this script in GUI mode. Please make sure you have it installed, then try again."
+    # TODO (maybe): implement with Kdialog. probably not worth until someone files an issue/PR
+    print_usage
+    exit 1
+  fi
+
+  arg_game=$(zenity --list --radiolist --title "Choose Which Game to Patch" \
+      --height 400 --width 600            \
+      --column "Select" --column "Title"  \
+      TRUE  'Chaos;Head NoAH'             \
+      FALSE 'Steins;Gate'                 \
+      FALSE 'Robotics;Notes Elite'        \
+      FALSE 'Chaos;Child'                 \
+      FALSE 'Steins;Gate 0'               \
+      FALSE 'Robotics;Notes DaSH')
+  handle_zenity "You must select which game to patch for the script to work."
+
+  arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $gamename" \
+      --directory --filename "$HOME/Downloads")
+  handle_zenity "You must select the directory containing the patch for the script to work."
+elif [[ $# -eq 2 ]]; then
+  arg_game="$1"
+  arg_patchdir="$2"
+else
+  echo "Invalid syntax" >&2
   print_usage
   exit 1
 fi
@@ -72,14 +133,16 @@ fi
 # Get the app ID and what the installer exe should be, based on the shortname.
 # IDs are available in the README.
 # CoZ's naming conventions are beautifully consistent, pls never change them
-steamgrid=
+appid=
+patch_exe=
 gamename=
-case $(tolower "$1") in
+has_steamgrid=
+case $(tolower "$arg_game") in
   'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
     appid=1961950
     patch_exe='CHNSteamPatch-Installer.exe'
     gamename="Chaos;Head NoAH"
-    steamgrid=1
+    has_steamgrid=1
     ;;
   'sg' | 'steins'[\;\ ]'gate')
     appid=412830
@@ -107,27 +170,27 @@ case $(tolower "$1") in
     gamename="Robotics;Notes DaSH"
     ;;
   *)
-    log_err "shortname '$1' is invalid"
+    log_err "shortname '$arg_game' is invalid"
     print_usage
     exit 1
     ;;
 esac
 
 log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
-[[ $steamgrid ]] && log_info "using custom SteamGrid images ..."
+[[ $has_steamgrid ]] && log_info "using custom SteamGrid images ..."
 
 
-# Make sure the patch directory ($2) is valid.
+# Make sure the patch directory ($arg_patchdir) is valid.
 # "Valid" here means:
 # (1) it exists, and
 # (2) it contains the expected patch EXE file to execute
-if [[ ! -d "$2" ]]; then
-  log_err "directory '$2' does not exist"
+if [[ ! -d "$arg_patchdir" ]]; then
+  log_err "directory '$arg_patchdir' does not exist"
   exit 1
 fi
 
-if [[ ! -f "$2/$patch_exe" ]]; then
-  log_err "expected patch EXE '$patch_exe' does not exist within directory '$2'"
+if [[ ! -f "$arg_patchdir/$patch_exe" ]]; then
+  log_err "expected patch EXE '$patch_exe' does not exist within directory '$arg_patchdir'"
   exit 1
 fi
 
@@ -137,15 +200,15 @@ fi
 # Prefer `realpath` to do the job, but if it's not available then get it by
 # concatenating the user's CWD and the relative path. Simple testing shows that
 # this hack does not work on Flatpak Protontricks.
-patch_dir="$2"
-if is_relpath "$2"; then
+patch_dir="$arg_patchdir"
+if is_relpath "$arg_patchdir"; then
   if is_cmd realpath; then
-    patch_dir=$(realpath "$2")
+    patch_dir=$(realpath "$arg_patchdir")
   else
     log_warn "'realpath' not available as a command."
     log_warn "attempting to manually set absolute path; this might cause issues."
     log_warn "if you get an error citing a non-existent file or directory, try supplying the path to the patch directory as absolute or homedir-relative."
-    patch_dir="$(pwd)/$2"
+    patch_dir="$(pwd)/$arg_patchdir"
   fi
 fi
 
@@ -197,8 +260,8 @@ fi
 log_info "patching $gamename ..."
 compat_mts=
 [[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
-$protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
-if [[ $? -ne 0 ]]; then
+if ! $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
+then
   log_warn "patch installation exited with nonzero status."
   log_warn "consult the output for errors."
 fi
@@ -211,7 +274,7 @@ fi
 # path install ($HOME/.local/share/Steam)
 #
 # TODO: Add support for flatpak Steam installs.
-if [[ $steamgrid ]]; then
+if [[ $has_steamgrid ]]; then
   log_info "copying custom SteamGrid images ..."
   for grid_dir in "$HOME/.local/share/Steam/userdata/"*/config/grid; do
     cp "$patch_dir/STEAMGRID/"*.png "$grid_dir/"
