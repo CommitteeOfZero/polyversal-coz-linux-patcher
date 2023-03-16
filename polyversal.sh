@@ -17,13 +17,13 @@ EOF
 
 # Want `./polyversal.sh chn` and `./polyversal.sh CHN` to work the same
 function tolower() {
-  echo "$*" | tr '[:upper:]' '[:lower:]'
+  printf '%s' "$*" | tr '[:upper:]' '[:lower:]'
 }
 
 # Returns whether the argument is a relative path or not, based solely on
 # whether the path starts with a '/'.
 function is_relpath() {
-  echo "$1" | grep -qE '^/' - && return 1 || return 0
+  printf '%s' "$1" | grep -qE '^/' - && return 1 || return 0
 }
 
 # `command -v COMMAND` prints information about COMMAND, but importantly has
@@ -64,7 +64,7 @@ function log_msg() {
       sevpfx="$0: $1:"
       ;;
   esac
-  echo "${sevpfx} ${*:2}${txt_normal}" >&2
+  printf '%s %s%s\n' "$sevpfx" "${*:2}" "${txt_normal}" >&2
 }
 function log_info() { log_msg info "$*"; }
 function log_warn() { log_msg warn "$*"; }
@@ -124,7 +124,7 @@ elif [[ $# -eq 2 ]]; then
   arg_game="$1"
   arg_patchdir="$2"
 else
-  echo "Invalid syntax" >&2
+  printf '%s\n' 'Invalid syntax' >&2
   print_usage
   exit 1
 fi
