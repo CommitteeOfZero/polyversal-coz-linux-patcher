@@ -69,7 +69,7 @@ To run the script in CLI mode, invoke it with two arguments as shown below, repl
 
 Relative paths are accepted but not guaranteed to work, especially when using Flatpak.[^relpaths] Absolute or homedir-relative paths should be preferred.
 
-### General Notes
+### Notes
 
 If you're using Flatpak and have the game in a non-default Steam library folder, Flatpak might complain about not having access permissions. It will spit out a command as part of its output; copy and paste this command in the terminal to grant it the required access and run the script again to resolve this issue.
 

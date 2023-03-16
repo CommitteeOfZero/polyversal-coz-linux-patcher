@@ -4,7 +4,9 @@
 function print_usage() {
   cat << EOF >&2
 Usage:
+ GUI:
   $0
+ CLI:
   $0 <game_shortname> <patch_folder_path>
 
 Game shortnames:
@@ -68,13 +70,15 @@ function log_info() { log_msg info "$*"; }
 function log_warn() { log_msg warn "$*"; }
 function log_err() { log_msg err "$*"; }
 
-# Handle non-zero exit statuses from Zenity. Arguments are the exit status
-# returned from zenity and one optional message which is displayed in the case
-# that the user closes the window.
+# Handle non-zero exit statuses from Zenity.
+# **Must be called immediately after zenity command.**
+# Single optional argument is the message to be displayed in the case that the
+# user closes the window.
 function handle_zenity() {
-  closedmsg="${*:2}"
+  zen_ret=$?
+  closedmsg="$*"
   [[ ! "$closedmsg" ]] && closedmsg="You must select an option."
-  case $1 in
+  case $zen_ret in
     1)
       log_err "$closedmsg"
       exit 1
@@ -111,11 +115,11 @@ if [[ $# -eq 0 ]]; then
       FALSE 'Chaos;Child'                 \
       FALSE 'Steins;Gate 0'               \
       FALSE 'Robotics;Notes DaSH')
-  handle_zenity $? "You must select which game to patch for the script to work."
+  handle_zenity "You must select which game to patch for the script to work."
 
   arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $gamename" \
       --directory --filename "$HOME/Downloads")
-  handle_zenity $? "You must select the directory containing the patch for the script to work."
+  handle_zenity "You must select the directory containing the patch for the script to work."
 elif [[ $# -eq 2 ]]; then
   arg_game="$1"
   arg_patchdir="$2"
