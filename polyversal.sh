@@ -293,7 +293,7 @@ fi
 if [[ $needs_sgfix ]]; then
   log_info "fixing STEINS;GATE launcher issue ..."
   # Return info about symlinking process via exit code.
-  # 0 means everything was find and dandy,
+  # 0 means everything was fine and dandy,
   # 1 means Launcher.exe already points to LauncherC0.exe,
   # 2 means one or both of the files doesn't exist.
   sg_shcmd=$(cat << EOF
