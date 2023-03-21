@@ -117,7 +117,7 @@ if [[ $# -eq 0 ]]; then
       FALSE 'Robotics;Notes DaSH')
   handle_zenity "You must select which game to patch for the script to work."
 
-  arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $gamename" \
+  arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $arg_game" \
       --directory --filename "$HOME/Downloads")
   handle_zenity "You must select the directory containing the patch for the script to work."
 elif [[ $# -eq 2 ]]; then
@@ -137,6 +137,7 @@ appid=
 patch_exe=
 gamename=
 has_steamgrid=
+needs_sgfix=
 case $(tolower "$arg_game") in
   'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
     appid=1961950
@@ -148,6 +149,7 @@ case $(tolower "$arg_game") in
     appid=412830
     patch_exe='SGPatch-Installer.exe'
     gamename="Steins;Gate"
+    needs_sgfix=1
     ;;
   'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
     appid=1111380
@@ -264,7 +266,10 @@ if ! $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $ap
 then
   log_warn "patch installation exited with nonzero status."
   log_warn "consult the output for errors."
+else
+  log_info "patch installation finished, no errors signaled."
 fi
+stty sane  # band-aid for newline wonkiness that wine sometimes creates
 
 # CHN CoZ patch includes custom SteamGrid images, but since the patch is built for
 # Windows, the placement of those files ends up happening within the Wine prefix 
@@ -279,4 +284,47 @@ if [[ $has_steamgrid ]]; then
   for grid_dir in "$HOME/.local/share/Steam/userdata/"*/config/grid; do
     cp "$patch_dir/STEAMGRID/"*.png "$grid_dir/"
   done
+  log_info "SteamGrid images copied."
+fi
+
+# S;G launches the default launcher via `Launcher.exe` for some reason instead
+# of the patched `LauncherC0.exe`.
+# Fix by symlinking Launcher to LauncherC0.
+if [[ $needs_sgfix ]]; then
+  log_info "fixing STEINS;GATE launcher issue ..."
+  # Return info about symlinking process via exit code.
+  # 0 means everything was find and dandy,
+  # 1 means Launcher.exe already points to LauncherC0.exe,
+  # 2 means one or both of the files doesn't exist.
+  sg_shcmd=$(cat << EOF
+if [[ -f Launcher.exe && -f LauncherC0.exe ]]; then
+  [[ \$(readlink Launcher.exe) == LauncherC0.exe ]] && exit 1
+  mv Launcher.exe Launcher.exe_bkp
+  ln -s LauncherC0.exe Launcher.exe
+  exit 0
+else
+  printf '%s\n\n%s\n' "Files in $(pwd):" "$(ls)"
+  exit 2
+fi
+EOF
+)
+  $protontricks_cmd -c "$sg_shcmd" $appid
+  case $? in
+    0)
+      log_info "launcher symlinked successfully."
+      ;;
+    1)
+      log_warn "Launcher.exe was already symlinked to LauncherC0.exe."
+      log_warn "have you already run this script?"
+      ;;
+    2)
+      log_err "one or both of Launcher.exe or LauncherC0.exe did not exist."
+      log_err "check output for contents of the game directory."
+      log_err "was the patch not installed correctly?"
+      ;;
+    *)
+      log_warn "symlink script exited with an unexpected status."
+      log_warn "consult the output for clues."
+      ;;
+  esac
 fi
