@@ -3,7 +3,7 @@
 This project is a fork of [CoZ's official Multiversal Linux patcher](https://github.com/CommitteeOfZero/multiversal-coz-linux-patcher). From the official repository:
 
 > These instructions and the included Bash script are intended to streamline installation of CoZ patches for Steam Play, including on Steam Deck.
-> 
+>
 > *This script is possible in no small part due to the work of [/u/PartTimeBento](https://www.reddit.com/u/PartTimeBento), who [provided many of the necessary instructions to automate this in a post on Reddit](https://www.reddit.com/r/SteamDeck/comments/uitpca/patching_steinsgate_and_steinsgate0_on_the).*
 
 ## TL;DR
@@ -20,7 +20,19 @@ This project is a fork of [CoZ's official Multiversal Linux patcher](https://git
 - Use Proton 7 or newer
 - &lt;[GameShortName](#game-short-names)&gt; is the game's abbreviation
 - &lt;PatchDir&gt; is the path to the extracted patch setup directory, preferably absolute or homedir-relative
+- If `./polyversal.sh` gives `Permission denied`, try `bash polyversal.sh`
 
+## Contents
+
+- [Backing up saved games and wiping a Proton prefix](#backing-up-saved-games-and-wiping-a-proton-prefix)
+- [Preparations](#preparations)
+- [Usage](#usage)
+  - [GUI](#gui)
+  - [CLI](#cli)
+  - [Notes](#notes)
+- [Game Short Names](#game-short-names)
+- [Known Issues](#known-issues)
+- [Troubleshooting](#troubleshooting)
 
 ## Backing up saved games and wiping a Proton prefix
 
@@ -31,13 +43,13 @@ If you have an existing installation of the game using a Proton version other th
 1. [Download the corresponding patch](https://sonome.dareno.me/projects) for your target game.
 2. Extract the files from the archive and take note of the full path to the extracted directory.
     - There have been reports of Ark extracting files incorrectly; make sure the extracted directory includes a few files whose names start with "Qt5". If GUI extraction proves unsuccessful, consider using [`unzip`](https://linux.die.net/man/1/unzip).
-3. This script utilizes [protontricks](https://github.com/Matoking/protontricks) to correctly apply the patch. If you already have a version of protontricks installed, you are good to go. If you do not, you can follow the link provided to install it yourself, or allow the script to install the Flatpak version.
+3. This script utilizes [Protontricks](https://github.com/Matoking/protontricks) to correctly apply the patch. If you already have a version of protontricks installed, you are good to go. If you do not, you can follow the link provided to install it yourself, or allow the script to install the Flatpak version.
     - To allow automatic installation of protontricks, ensure [Flatpak](https://flatpak.org/setup/) is installed on your machine and runnable by your user without root access (if you are not running SteamOS 3.x or another distro that provides Flatpak as part of the OS).
     - Steam Deck users should prefer the Flatpak version, as SteamOS is liable to delete user-installed system software without notice.
 4. Download and install the related game from Steam.
-5. Within the game's properties, set its compatibility tool to the latest official Valve Proton 7 (Proton 7.0-6 at time of writing).
+5. Within the game's Properties menu, set its compatibility tool to the latest official Valve Proton 7 (Proton 7.0-6 at time of writing).
 6. Launch the game once in order to generate a Proton prefix, then quit the game.
-7. Download a copy of this repository and extract its files.
+7. Download and extract [the latest release of the script](https://github.com/Macitron/Polyversal-Linux-CoZ-Patcher/releases).
 8. Navigate to the folder containing these files using the terminal emulator of your choice.
     - Konsole is the default for Steam Deck.
 
@@ -71,15 +83,18 @@ Relative paths are accepted but not guaranteed to work, especially when using Fl
 
 ### Notes
 
+All instances of `./polyversal.sh` can be replaced with `bash polyversal.sh`. If the first form does nothing and says "`Permission denied`", try the second form.
+
 If you're using Flatpak and have the game in a non-default Steam library folder, Flatpak might complain about not having access permissions. It will spit out a command as part of its output; copy and paste this command in the terminal to grant it the required access and run the script again to resolve this issue.
 
 As part of the execution of this script, a GUI for the actual patch installer should launch. Follow the instructions in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game.
 
 For example, on the Steam Deck: `Z:/home/deck/.local/share/Steam/steamapps/common/CHAOS;HEAD NOAH`.
 
-Then, go back to Steam and launch the game. It should now be patched. Confirm that it launches the patched CoZ launcher with a black background (with the exception of Steins;Gate, [see below](#known-issues)).
+Then, go back to Steam and launch the game. It should now be patched. Confirm that it launches the patched CoZ launcher with a black background.
 
-**Note**: Executing this script renders the terminal that ran the commands unable to run any further commands&mdash;on both Arch Linux and SteamOS 3.x on the Steam Deck. This is expected behavior. If you close the terminal after execution and open a new one, you will be able to access the terminal once more. Of course, after the successful installation of the patch, the terminal is unnecessary to run the patched game.
+The official repository offers the following warning:
+> Executing this script renders the terminal that ran the commands unable to run any further commands&mdash;on both Arch Linux and SteamOS 3.x on the Steam Deck. This is expected behavior. If you close the terminal after execution and open a new one, you will be able to access the terminal once more. Of course, after the successful installation of the patch, the terminal is unnecessary to run the patched game.
 
 ## Game Short Names
 
@@ -98,24 +113,19 @@ Some variations like 'dash' are supported; consult the script itself for a full 
 
 ## Known Issues
 
-*STEINS;GATE* in its patched form launches the game's default launcher upon clicking or pressing "Play" in Steam. The Committee of Zero's custom launcher that is installed as part of the patch will open as soon as the default launcher is closed. This means that launching the game through the default launcher first launches the game, then the custom launcher. This occurs because Steam still launches the game through `Launcher.exe` rather than the patched `LauncherC0.exe`.
+### Steins;Gate Symlinks
 
-This can be manually fixed by creating a symlink to the patched launcher:
-
-```sh
-# Assuming default install location
-cd "$HOME/.local/share/Steam/steamapps/common/STEINS;GATE"
-mv Launcher.exe Launcher.exe.bkp
-ln -s LauncherC0.exe Launcher.exe
-```
-
-Before uninstalling the patch with `nguninstall.exe` in the Steam directory, be sure to undo these changes. **To avoid potential issues, make sure to run the below commands _before_ uninstalling the patch,** if you decide to do so :(
+The installation of the *Steins;Gate* patch involves some additional symlinking to fix an issue related to the game's launcher. These changes are **not** automatically undone during uninstallation via `nguninstall.exe`, so they must be done manually. Fortunately, this is as simple as copying and pasting the commands below. **To avoid potential issues, make sure to run these *before* uninstalling the patch,** if you decide to do so :(
 
 ```sh
 cd "$HOME/.local/share/Steam/steamapps/common/STEINS;GATE"
 unlink Launcher.exe
-mv Launcher.exe.bkp Launcher.exe
+mv Launcher.exe_bkp Launcher.exe
 ```
+
+### Hanging Wine Processes
+
+A wine process is spawned in the course of running the script for the purpose of running the actual patch installer. On completion, this wine process appears to be left orphaned.[^winehang] This can be observed using `top` or similar. It is unknown why this happens, and its impact on the system is negligible, but it warrants notice nonetheless in case you want to manually terminate it.
 
 ## Troubleshooting
 
@@ -124,3 +134,5 @@ If you run into any problems executing the Polyversal Linux Steam Patcher for th
 The PLSPfCoZSASPoL has been tested on Arch Linux, Fedora 37, and SteamOS 3.x, so pull requests to address issues specific to other Linux distributions are especially appreciated.
 
 [^relpaths]: Specifically, relative paths fail to work in the case when Flatpak Protontricks is being used and `realpath` is not available as a command. Steam Deck does have `realpath` available, so in most use cases it should be fine.
+
+[^winehang]: Phenomenon observed on Arch Linux, kernel 6.2.6-arch1-1. I noticed this one day after doing multiple test runs and finding ~25 orphaned wine processes on btop.
