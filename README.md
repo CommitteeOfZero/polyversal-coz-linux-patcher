@@ -50,6 +50,7 @@ If you have an existing installation of the game using a Proton version other th
 5. Within the game's Properties menu, set its compatibility tool to the latest official Valve Proton 7 (Proton 7.0-6 at time of writing).
 6. Launch the game once in order to generate a Proton prefix, then quit the game.
 7. Download and extract [the latest release of the script](https://github.com/Macitron/Polyversal-Linux-CoZ-Patcher/releases).
+    - You can also clone this repo or download a copy under the Code button at the top of the page if you want to use the latest (unstable) development version. [Here be dragons](https://en.wikipedia.org/wiki/Here_be_dragons).
 8. Navigate to the folder containing these files using the terminal emulator of your choice.
     - Konsole is the default for Steam Deck.
 
@@ -115,17 +116,17 @@ Some variations like 'dash' are supported; consult the script itself for a full 
 
 ### Steins;Gate Symlinks
 
-The installation of the *Steins;Gate* patch involves some additional symlinking to fix an issue related to the game's launcher. These changes are **not** automatically undone during uninstallation via `nguninstall.exe`, so they must be done manually. Fortunately, this is as simple as copying and pasting the commands below. **To avoid potential issues, make sure to run these *before* uninstalling the patch,** if you decide to do so :(
+The installation of the *Steins;Gate* patch involves some additional symlinking to fix an issue related to the game's launcher. These changes are **not** automatically undone during uninstallation via `nguninstall.exe`, so they must be done manually. Fortunately, this is as simple as copying and pasting the command below. **To avoid potential issues, make sure to run this *before* uninstalling the patch,** if you decide to do so :(
 
 ```sh
-cd "$HOME/.local/share/Steam/steamapps/common/STEINS;GATE"
-unlink Launcher.exe
-mv Launcher.exe_bkp Launcher.exe
+# If using flatpak, replace `protontricks` with
+# `flatpak run com.github.Matoking.protontricks`
+protontricks -c 'unlink Launcher.exe && mv Launcher.exe_bkp Launcher.exe' 412830
 ```
 
 ### Hanging Wine Processes
 
-A wine process is spawned in the course of running the script for the purpose of running the actual patch installer. On completion, this wine process appears to be left orphaned.[^winehang] This can be observed using `top` or similar. It is unknown why this happens, and its impact on the system is negligible, but it warrants notice nonetheless in case you want to manually terminate it.
+A wine process is spawned in the course of running the script for the purpose of running the actual patch installer. On completion, this process appears to be left orphaned; this can be observed using `top` or similar.[^winehang] It is unknown why this happens, and its impact on the system is negligible at most, but it warrants notice nonetheless in case you want to manually terminate it.
 
 ## Troubleshooting
 
