@@ -292,24 +292,24 @@ fi
 # Fix by symlinking Launcher to LauncherC0.
 if [[ $needs_sgfix ]]; then
   log_info "fixing STEINS;GATE launcher issue ..."
+
   # Return info about symlinking process via exit code.
   # 0 means everything was fine and dandy,
   # 1 means Launcher.exe already points to LauncherC0.exe,
   # 2 means one or both of the files doesn't exist.
   sg_shcmd=$(cat << EOF
-if [[ -f Launcher.exe && -f LauncherC0.exe ]]; then
-  [[ \$(readlink Launcher.exe) == LauncherC0.exe ]] && exit 1
-  mv Launcher.exe Launcher.exe_bkp
-  ln -s LauncherC0.exe Launcher.exe
-  exit 0
-else
-  printf '%s\n\n%s\n' "Files in $(pwd):" "$(ls)"
+if [[ ! ( -f Launcher.exe && -f LauncherC0.exe ) ]]; then
+  printf '%s\n\n%s\n' "Files in \$(pwd):" "\$(ls)"
   exit 2
 fi
+[[ \$(readlink Launcher.exe) == LauncherC0.exe ]] && exit 1
+mv Launcher.exe Launcher.exe_bkp
+ln -s LauncherC0.exe Launcher.exe
 EOF
 )
   $protontricks_cmd -c "$sg_shcmd" $appid
-  case $? in
+  cmdret=$?
+  case $cmdret in
     0)
       log_info "launcher symlinked successfully."
       ;;
@@ -323,7 +323,7 @@ EOF
       log_err "was the patch not installed correctly?"
       ;;
     *)
-      log_warn "symlink script exited with an unexpected status."
+      log_warn "symlink script exited with unexpected status code $cmdret."
       log_warn "consult the output for clues."
       ;;
   esac
