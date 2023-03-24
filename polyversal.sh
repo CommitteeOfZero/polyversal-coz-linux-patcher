@@ -48,7 +48,7 @@ fi
 
 # log_msg <info|warn|err> <message>
 function log_msg() {
-  case $(tolower "$1") in
+  case "$(tolower "$1")" in
     'warn' | 'w')
       sevpfx="${txt_yellow}$0: WARN:"
       ;;
@@ -106,7 +106,7 @@ if [[ $# -eq 0 ]]; then
     exit 1
   fi
 
-  arg_game=$(zenity --list --radiolist --title "Choose Which Game to Patch" \
+  arg_game="$(zenity --list --radiolist --title "Choose Which Game to Patch" \
       --height 400 --width 600            \
       --column "Select" --column "Title"  \
       TRUE  'Chaos;Head NoAH'             \
@@ -114,11 +114,11 @@ if [[ $# -eq 0 ]]; then
       FALSE 'Robotics;Notes Elite'        \
       FALSE 'Chaos;Child'                 \
       FALSE 'Steins;Gate 0'               \
-      FALSE 'Robotics;Notes DaSH')
+      FALSE 'Robotics;Notes DaSH')"
   handle_zenity "You must select which game to patch for the script to work."
 
-  arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $arg_game" \
-      --directory --filename "$HOME/Downloads")
+  arg_patchdir="$(zenity --file-selection --title "Choose Patch Directory for $arg_game" \
+      --directory --filename "$HOME/Downloads")"
   handle_zenity "You must select the directory containing the patch for the script to work."
 elif [[ $# -eq 2 ]]; then
   arg_game="$1"
@@ -138,7 +138,7 @@ patch_exe=
 gamename=
 has_steamgrid=
 needs_sgfix=
-case $(tolower "$arg_game") in
+case "$(tolower "$arg_game")" in
   'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
     appid=1961950
     patch_exe='CHNSteamPatch-Installer.exe'
@@ -205,7 +205,7 @@ fi
 patch_dir="$arg_patchdir"
 if is_relpath "$arg_patchdir"; then
   if is_cmd realpath; then
-    patch_dir=$(realpath "$arg_patchdir")
+    patch_dir="$(realpath "$arg_patchdir")"
   else
     log_warn "'realpath' not available as a command."
     log_warn "attempting to manually set absolute path; this might cause issues."
@@ -297,7 +297,7 @@ if [[ $needs_sgfix ]]; then
   # 0 means everything was fine and dandy,
   # 1 means Launcher.exe already points to LauncherC0.exe,
   # 2 means one or both of the files doesn't exist.
-  sg_shcmd=$(cat << EOF
+  sg_shcmd="$(cat << EOF
 if [[ ! ( -f Launcher.exe && -f LauncherC0.exe ) ]]; then
   printf '%s\n\n%s\n' "Files in \$(pwd):" "\$(ls)"
   exit 2
@@ -306,7 +306,7 @@ fi
 mv Launcher.exe Launcher.exe_bkp
 ln -s LauncherC0.exe Launcher.exe
 EOF
-)
+)"
   $protontricks_cmd -c "$sg_shcmd" $appid
   cmdret=$?
   case $cmdret in
