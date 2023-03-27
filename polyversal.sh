@@ -197,7 +197,6 @@ if [[ $# -eq 0 ]]; then
   # Assume GUI mode
   if ! is_cmd zenity; then
     log_fatal "Zenity is required to run this script in GUI mode. Please make sure you have it installed, then try again."
-    # TODO (maybe): implement with Kdialog. probably not worth until someone files an issue/PR
     print_usage
     exit 1
   fi
@@ -309,8 +308,6 @@ if is_relpath "$arg_patchdir"; then
   fi
 fi
 
-# Patch the game
-log_info "patching $gamename ..."
 
 # Flatpak Protontricks has to be given access to the game's Steam folder to
 # make changes. On Deck this is (hopefully) as easy as giving it access to all
@@ -327,6 +324,8 @@ if [[ $is_deck ]]; then
 fi
 [[ $is_flatpak ]] && flatpak override --user --filesystem="$patch_dir" "$fp_protontricks"
 
+# Patch the game
+log_info "patching $gamename ..."
 if ! $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
 then
   log_err "patch installation exited with nonzero status."
