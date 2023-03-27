@@ -38,57 +38,66 @@ function is_cmd() {
 # logging capabilities. Only log with colors if `tput` is available, stderr
 # outputs to a terminal, and it supports 8 or more colors.
 txt_normal=''
+txt_green=''
 txt_yellow=''
 txt_red=''
+txt_purple=''
 if is_cmd tput && test -t 2 && [[ "$(tput colors)" -ge 8 ]]; then
   txt_normal="$(tput sgr0)"
+  txt_green="$(tput setaf 2)"
   txt_yellow="$(tput setaf 3)"
   txt_red="$(tput setaf 1)"
+  txt_purple="$(tput setaf 5)"
 fi
 
 # log_msg <info|warn|err> <message>
 function log_msg() {
+  local sevpfx=
   case "$(tolower "$1")" in
+    'info' | 'i')
+      sevpfx="${txt_green}INFO:"
+      ;;
     'warn' | 'w')
-      sevpfx="${txt_yellow}$0: WARN:"
+      sevpfx="${txt_yellow}WARN:"
       ;;
     'error' | 'err' | 'e')
-      sevpfx="${txt_red}$0: ERR:"
+      sevpfx="${txt_red}ERR:"
       ;;
-    'info' | 'i')
-      sevpfx="$0: INFO:"
+    'fatal' | 'fat' | 'f')
+      sevpfx="${txt_purple}FATAL:"
       ;;
     *)
       # Well I don't necessarily want the program to die immediately, so just do
       # whatever ig
-      sevpfx="$0: $1:"
+      sevpfx="$1:"
       ;;
   esac
-  printf '%s %s%s\n' "$sevpfx" "${*:2}" "${txt_normal}" >&2
+  printf '%s %s%s\n' "$0: $sevpfx" "${*:2}" "$txt_normal" >&2
 }
 function log_info() { log_msg info "$*"; }
 function log_warn() { log_msg warn "$*"; }
 function log_err() { log_msg err "$*"; }
+function log_fatal() { log_msg fatal "$*"; }
 
 # Handle non-zero exit statuses from Zenity.
 # **Must be called immediately after zenity command.**
 # Single optional argument is the message to be displayed in the case that the
 # user closes the window.
 function handle_zenity() {
-  zen_ret=$?
-  closedmsg="$*"
+  local zen_ret=$?
+  local closedmsg="$*"
   [[ ! "$closedmsg" ]] && closedmsg="You must select an option."
   case $zen_ret in
     1)
-      log_err "$closedmsg"
+      log_fatal "$closedmsg"
       exit 1
       ;;
     5)
-      log_err "The input dialogue timed out."
+      log_fatal "The input dialogue timed out."
       exit 1
       ;;
     -1)
-      log_err "An unexpected error occurred using Zenity."
+      log_fatal "An unexpected error occurred using Zenity."
       exit 1
       ;;
   esac
@@ -110,7 +119,7 @@ arg_patchdir=
 if [[ $# -eq 0 ]]; then
   # Assume GUI mode
   if ! [[ $hascmd_zenity ]]; then
-    log_err "Zenity is required to run this script in GUI mode. Please make sure you have it installed, then try again."
+    log_fatal "Zenity is required to run this script in GUI mode. Please make sure you have it installed, then try again."
     # TODO (maybe): implement with Kdialog. probably not worth until someone files an issue/PR
     print_usage
     exit 1
@@ -182,7 +191,7 @@ case "$(tolower "$arg_game")" in
     gamename="Robotics;Notes DaSH"
     ;;
   *)
-    log_err "shortname '$arg_game' is invalid"
+    log_fatal "shortname '$arg_game' is invalid"
     print_usage
     exit 1
     ;;
@@ -197,12 +206,12 @@ log_info "patching $gamename using app ID $appid, expecting patch EXE name '$pat
 # (1) it exists, and
 # (2) it contains the expected patch EXE file to execute
 if [[ ! -d "$arg_patchdir" ]]; then
-  log_err "directory '$arg_patchdir' does not exist"
+  log_fatal "directory '$arg_patchdir' does not exist"
   exit 1
 fi
 
 if [[ ! -f "$arg_patchdir/$patch_exe" ]]; then
-  log_err "expected patch EXE '$patch_exe' does not exist within directory '$arg_patchdir'"
+  log_fatal "expected patch EXE '$patch_exe' does not exist within directory '$arg_patchdir'"
   exit 1
 fi
 
@@ -241,14 +250,14 @@ if [[ $hascmd_protontricks ]]; then
 else
   log_info "system install of protontricks not found. proceeding with flatpak ..."
   if ! [[ $hascmd_flatpak ]]; then
-    log_err "neither flatpak nor system protontricks was detected."
-    log_err "please install one of the two and then try again."
+    log_fatal "neither flatpak nor system protontricks was detected."
+    log_fatal "please install one of the two and then try again."
     exit 1
   fi
   if ! flatpak list | grep -q "$fp_protontricks" -; then
     log_info "protontricks is not installed on flatpak. attempting installation ..."
     if ! flatpak install $fp_protontricks; then
-      log_err "an error occurred while installing flatpak protontricks."
+      log_fatal "an error occurred while installing flatpak protontricks."
       exit 1
     fi
     log_info "flatpak protontricks installed successfully"
@@ -274,8 +283,8 @@ compat_mts=
 [[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
 if ! $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
 then
-  log_warn "patch installation exited with nonzero status."
-  log_warn "consult the output for errors."
+  log_err "patch installation exited with nonzero status."
+  log_err "consult the output for errors."
 else
   log_info "patch installation finished, no errors signaled."
 fi
