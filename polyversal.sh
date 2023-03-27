@@ -52,7 +52,7 @@ fi
 
 # log_msg <info|warn|err> <message>
 function log_msg() {
-  local sevpfx=
+  local sevpfx
   case "$(tolower "$1")" in
     'info' | 'i')
       sevpfx="${txt_green}INFO:"
@@ -103,22 +103,99 @@ function handle_zenity() {
   esac
 }
 
-# Define which commands are available
-hascmd_zenity=
-hascmd_realpath=
-hascmd_protontricks=
-hascmd_flatpak=
-is_cmd zenity && hascmd_zenity=1
-is_cmd realpath && hascmd_realpath=1
-is_cmd protontricks && hascmd_protontricks=1
-is_cmd flatpak && hascmd_flatpak=1
+# Protontricks version is output as 'protontricks (x.y.z)'
+function ptx_ver() {
+  local ptx_cmd
+  case "$1" in
+    'fp')
+      ptx_cmd='flatpak run com.github.Matoking.protontricks'
+      ;;
+    'sys')
+      ptx_cmd='protontricks'
+      ;;
+  esac
+  $ptx_cmd --version | sed -E 's/^protontricks \((.*)\)$/\1/g'
+}
+
+# Determines whether the specified Protontricks is up to date, i.e. its version
+# number is semantically greater than '1.10.1'. Otherwise running the EXE will
+# fail with a cryptic error message about magic numbers in the proton
+# executable, or something.
+# Single argument is which Protontricks to check:
+# 'fp' = Flatpak, 'sys' = system install
+# Other arguments don't do anything. Don't use them!
+# is_ptx_valid <fp|sys>
+function is_ptxvalid() {
+  local cur_ver
+  local older_ver
+  local min_ver=1.10.1
+  cur_ver="$(ptx_ver "$1")"
+  older_ver="$(printf '%s\n%s\n' "$min_ver" "$cur_ver" | sort -V | head -n 1)"
+  [[ $older_ver == "$min_ver" ]]
+}
+
+
+# Detect whether the machine is a Steam Deck.
+is_deck=
+if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
+  is_deck=1
+  log_info "detected Steam Deck environment ..."
+fi
+
+# We need Protontricks either through a system install or through Flatpak to
+# work the magic.
+# Prefer system install since it plays nice with relative dirs and doesn't need
+# permissions to be setup, but if it's unavailable or outdated then use Flatpak.
+protontricks_cmd='protontricks'
+fp_protontricks='com.github.Matoking.protontricks'
+is_flatpak=
+if is_cmd protontricks && is_ptxvalid sys; then
+  log_info "detected valid system install of protontricks ..."
+else
+  if is_cmd protontricks; then
+    log_warn "system install of protontricks has insufficient version: $(ptx_ver sys) < 1.10.1"
+  else
+    log_info "system install of protontricks not found"
+  fi
+
+  log_info "proceeding with flatpak ..."
+  if ! is_cmd flatpak; then
+    log_fatal "neither flatpak nor a valid system protontricks was detected."
+    log_fatal "please install one of the two and then try again."
+    exit 1
+  fi
+
+  # Install protontricks if it's not already
+  if ! flatpak list | grep -q "$fp_protontricks" -; then
+    log_warn "protontricks is not installed on flatpak. attempting installation ..."
+    if ! flatpak install "$fp_protontricks"; then
+      log_fatal "an error occurred while installing flatpak protontricks."
+      exit 1
+    fi
+    log_info "flatpak protontricks installed successfully"
+  fi
+
+  # Has to have version >= 1.10.1
+  if ! is_ptxvalid fp; then
+    log_warn "flatpak protontricks has insufficient version: $(ptx_ver fp) < 1.10.1"
+    log_warn "attempting to update ..."
+    if ! flatpak update "$fp_protontricks"; then
+      log_fatal "an error occurred while updating flatpak protontricks."
+      exit 1
+    fi
+    log_info "flatpak protontricks updated successfully"
+  fi
+
+  is_flatpak=1
+  protontricks_cmd="flatpak run $fp_protontricks"
+fi
 
 
 arg_game=
 arg_patchdir=
 if [[ $# -eq 0 ]]; then
   # Assume GUI mode
-  if ! [[ $hascmd_zenity ]]; then
+  if ! is_cmd zenity; then
     log_fatal "Zenity is required to run this script in GUI mode. Please make sure you have it installed, then try again."
     # TODO (maybe): implement with Kdialog. probably not worth until someone files an issue/PR
     print_usage
@@ -200,7 +277,6 @@ esac
 log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
 [[ $has_steamgrid ]] && log_info "using custom SteamGrid images ..."
 
-
 # Make sure the patch directory ($arg_patchdir) is valid.
 # "Valid" here means:
 # (1) it exists, and
@@ -223,7 +299,7 @@ fi
 # this hack does not work on Flatpak Protontricks.
 patch_dir="$arg_patchdir"
 if is_relpath "$arg_patchdir"; then
-  if [[ $hascmd_realpath ]]; then
+  if is_cmd realpath; then
     patch_dir="$(realpath "$arg_patchdir")"
   else
     log_warn "'realpath' not available as a command."
@@ -233,54 +309,24 @@ if is_relpath "$arg_patchdir"; then
   fi
 fi
 
-
-# Detect whether the machine is a Steam Deck.
-is_deck=
-if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
-  is_deck=1
-  log_info "detected Steam Deck environment ..."
-fi
-
-# We need either system Protontricks or Flatpak Protontricks to work the magic.
-# Prefer system Protontricks if it exists since there's less to set up.
-protontricks_cmd='protontricks'
-fp_protontricks='com.github.Matoking.protontricks'
-if [[ $hascmd_protontricks ]]; then
-  log_info "detected system install of protontricks ..."
-else
-  log_info "system install of protontricks not found. proceeding with flatpak ..."
-  if ! [[ $hascmd_flatpak ]]; then
-    log_fatal "neither flatpak nor system protontricks was detected."
-    log_fatal "please install one of the two and then try again."
-    exit 1
-  fi
-  if ! flatpak list | grep -q "$fp_protontricks" -; then
-    log_info "protontricks is not installed on flatpak. attempting installation ..."
-    if ! flatpak install $fp_protontricks; then
-      log_fatal "an error occurred while installing flatpak protontricks."
-      exit 1
-    fi
-    log_info "flatpak protontricks installed successfully"
-  fi
-  protontricks_cmd="flatpak run $fp_protontricks"
-
-  # Flatpak Protontricks has to be given access to the game's Steam folder to
-  # make changes. On Deck this is (hopefully) as easy as giving it access to all
-  # of its mounts and partitions; on PC, this could involve some tricky parsing
-  # of VDF files to give it access to different library folders.
-  [[ $is_deck ]] && flatpak override --user --filesystem=/run/media/ $fp_protontricks
-
-  # TODO: parse VDF files to give it access to different library folders. For
-  # now, FP Protontricks gives the user a prompt telling it which folder to give
-  # access to anyway, so it's not too big of an issue as long as the user can
-  # (a) read, and (b) copy and paste a single command.
-fi
-
-
 # Patch the game
 log_info "patching $gamename ..."
+
+# Flatpak Protontricks has to be given access to the game's Steam folder to
+# make changes. On Deck this is (hopefully) as easy as giving it access to all
+# of its mounts and partitions; on PC, this could involve some tricky parsing
+# of VDF files to give it access to different library folders.
+# TODO: parse VDF files to give it access to different library folders. For
+# now, FP Protontricks gives the user a prompt telling it which folder to give
+# access to anyway, so it's not too big of an issue as long as the user can
+# (a) read, and (b) copy and paste a single command.
 compat_mts=
-[[ $is_deck ]] && compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
+if [[ $is_deck ]]; then
+  flatpak override --user --filesystem=/run/media/ "$fp_protontricks"
+  compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
+fi
+[[ $is_flatpak ]] && flatpak override --user --filesystem="$patch_dir" "$fp_protontricks"
+
 if ! $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
 then
   log_err "patch installation exited with nonzero status."
@@ -289,6 +335,7 @@ else
   log_info "patch installation finished, no errors signaled."
 fi
 stty sane  # band-aid for newline wonkiness that wine sometimes creates
+
 
 # CHN CoZ patch includes custom SteamGrid images, but since the patch is built for
 # Windows, the placement of those files ends up happening within the Wine prefix 
@@ -312,6 +359,7 @@ if [[ $has_steamgrid ]]; then
 
   [[ ! $something_happened ]] && log_info "SteamGrid images installed."
 fi
+
 
 # S;G launches the default launcher via `Launcher.exe` for some reason instead
 # of the patched `LauncherC0.exe`.
