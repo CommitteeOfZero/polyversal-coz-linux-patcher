@@ -94,12 +94,22 @@ function handle_zenity() {
   esac
 }
 
+# Define which commands are available
+hascmd_zenity=
+hascmd_realpath=
+hascmd_protontricks=
+hascmd_flatpak=
+is_cmd zenity && hascmd_zenity=1
+is_cmd realpath && hascmd_realpath=1
+is_cmd protontricks && hascmd_protontricks=1
+is_cmd flatpak && hascmd_flatpak=1
+
 
 arg_game=
 arg_patchdir=
 if [[ $# -eq 0 ]]; then
   # Assume GUI mode
-  if ! is_cmd zenity; then
+  if ! [[ $hascmd_zenity ]]; then
     log_err "Zenity is required to run this script in GUI mode. Please make sure you have it installed, then try again."
     # TODO (maybe): implement with Kdialog. probably not worth until someone files an issue/PR
     print_usage
@@ -204,7 +214,7 @@ fi
 # this hack does not work on Flatpak Protontricks.
 patch_dir="$arg_patchdir"
 if is_relpath "$arg_patchdir"; then
-  if is_cmd realpath; then
+  if [[ $hascmd_realpath ]]; then
     patch_dir="$(realpath "$arg_patchdir")"
   else
     log_warn "'realpath' not available as a command."
@@ -226,11 +236,11 @@ fi
 # Prefer system Protontricks if it exists since there's less to set up.
 protontricks_cmd='protontricks'
 fp_protontricks='com.github.Matoking.protontricks'
-if is_cmd protontricks; then
+if [[ $hascmd_protontricks ]]; then
   log_info "detected system install of protontricks ..."
 else
   log_info "system install of protontricks not found. proceeding with flatpak ..."
-  if ! is_cmd flatpak; then
+  if ! [[ $hascmd_flatpak ]]; then
     log_err "neither flatpak nor system protontricks was detected."
     log_err "please install one of the two and then try again."
     exit 1
