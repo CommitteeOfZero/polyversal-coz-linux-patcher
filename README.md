@@ -16,7 +16,7 @@ This project is a fork of [CoZ's official Multiversal Linux patcher](https://git
 ./polyversal.sh <GameShortName> <PatchDir>
 ```
 
-- Have [Protontricks](https://github.com/Matoking/protontricks) or [Flatpak](https://flatpak.org/setup/) installed
+- Have [Protontricks](https://github.com/Matoking/protontricks) >= 1.10.1 or [Flatpak](https://flatpak.org/setup/) installed
 - Use Proton 7 or newer
 - &lt;[GameShortName](#game-short-names)&gt; is the game's abbreviation
 - &lt;PatchDir&gt; is the path to the extracted patch setup directory, preferably absolute or homedir-relative
@@ -43,7 +43,7 @@ If you have an existing installation of the game using a Proton version other th
 1. [Download the corresponding patch](https://sonome.dareno.me/projects) for your target game.
 2. Extract the files from the archive and take note of the full path to the extracted directory.
     - There have been reports of Ark extracting files incorrectly; make sure the extracted directory includes a few files whose names start with "Qt5". If GUI extraction proves unsuccessful, consider using [`unzip`](https://linux.die.net/man/1/unzip).
-3. This script utilizes [Protontricks](https://github.com/Matoking/protontricks) to correctly apply the patch. If you already have a version of protontricks installed, you are good to go. If you do not, you can follow the link provided to install it yourself, or allow the script to install the Flatpak version.
+3. This script requires [Protontricks](https://github.com/Matoking/protontricks) version 1.10.1 or newer to correctly apply the patch. If you already have this installed, you are good to go. If you do not, you can follow the link provided to install it yourself, or allow the script to install the Flatpak version.
     - To allow automatic installation of protontricks, ensure [Flatpak](https://flatpak.org/setup/) is installed on your machine and runnable by your user without root access (if you are not running SteamOS 3.x or another distro that provides Flatpak as part of the OS).
     - Steam Deck users should prefer the Flatpak version, as SteamOS is liable to delete user-installed system software without notice.
 4. Download and install the related game from Steam.
@@ -86,7 +86,11 @@ Relative paths are accepted but not guaranteed to work, especially when using Fl
 
 All instances of `./polyversal.sh` can be replaced with `bash polyversal.sh`. If the first form does nothing and says "`Permission denied`", try the second form.
 
+The script will prefer to use a system install of Protontricks, if present, over Flatpak since there are less points of failure.
+
 If you're using Flatpak and have the game in a non-default Steam library folder, Flatpak might complain about not having access permissions. It will spit out a command as part of its output; copy and paste this command in the terminal to grant it the required access and run the script again to resolve this issue.
+
+If you have an outdated version of Protontricks installed via Flatpak, it will be updated automatically. If for some arcane reason you need a specific, old version installed, be aware that you will have to downgrade after this script completes.
 
 As part of the execution of this script, a GUI for the actual patch installer should launch. Follow the instructions in the interface to install the patch. If asked for an installation directory by the installer, use: `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game.
 
