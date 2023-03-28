@@ -52,7 +52,7 @@ If you have an existing installation of the game using a Proton version other th
 7. Download and extract [the latest release of the script](https://github.com/Macitron/Polyversal-Linux-CoZ-Patcher/releases).
     - You can also clone this repo or download a copy under the Code button at the top of the page if you want to use the latest (unstable) development version. [Here be dragons](https://en.wikipedia.org/wiki/Here_be_dragons).
 8. Navigate to the folder containing these files using the terminal emulator of your choice.
-    - Konsole is the default for Steam Deck.
+    - [Konsole](https://youtu.be/t4w0A6ICs0E) is the default for Steam Deck.
 
 ## Usage
 
