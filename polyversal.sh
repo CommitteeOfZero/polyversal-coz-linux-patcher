@@ -136,9 +136,9 @@ function is_ptxvalid() {
 
 
 # Detect whether the machine is a Steam Deck.
-is_deck=
+is_deck=false
 if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
-  is_deck=1
+  is_deck=true
   log_info "detected Steam Deck environment ..."
 fi
 
@@ -148,7 +148,7 @@ fi
 # permissions to be setup, but if it's unavailable or outdated then use Flatpak.
 protontricks_cmd='protontricks'
 fp_protontricks='com.github.Matoking.protontricks'
-is_flatpak=
+is_flatpak=false
 if is_cmd protontricks && is_ptxvalid sys; then
   log_info "detected valid system install of protontricks ..."
 else
@@ -186,7 +186,7 @@ else
     log_info "flatpak protontricks updated successfully"
   fi
 
-  is_flatpak=1
+  is_flatpak=true
   protontricks_cmd="flatpak run $fp_protontricks"
 fi
 
@@ -231,20 +231,20 @@ fi
 appid=
 patch_exe=
 gamename=
-has_steamgrid=
-needs_sgfix=
+has_steamgrid=false
+needs_sgfix=false
 case "$(tolower "$arg_game")" in
   'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
     appid=1961950
     patch_exe='CHNSteamPatch-Installer.exe'
     gamename="Chaos;Head NoAH"
-    has_steamgrid=1
+    has_steamgrid=true
     ;;
   'sg' | 'steins'[\;\ ]'gate')
     appid=412830
     patch_exe='SGPatch-Installer.exe'
     gamename="Steins;Gate"
-    needs_sgfix=1
+    needs_sgfix=true
     ;;
   'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
     appid=1111380
@@ -274,7 +274,7 @@ case "$(tolower "$arg_game")" in
 esac
 
 log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
-[[ $has_steamgrid ]] && log_info "using custom SteamGrid images ..."
+$has_steamgrid && log_info "using custom SteamGrid images ..."
 
 # Make sure the patch directory ($arg_patchdir) is valid.
 # "Valid" here means:
@@ -318,11 +318,11 @@ fi
 # access to anyway, so it's not too big of an issue as long as the user can
 # (a) read, and (b) copy and paste a single command.
 compat_mts=
-if [[ $is_deck ]]; then
+if $is_deck; then
   flatpak override --user --filesystem=/run/media/ "$fp_protontricks"
   compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
 fi
-[[ $is_flatpak ]] && flatpak override --user --filesystem="$patch_dir" "$fp_protontricks"
+$is_flatpak && flatpak override --user --filesystem="$patch_dir" "$fp_protontricks"
 
 # Patch the game
 log_info "patching $gamename ..."
@@ -344,26 +344,26 @@ stty sane  # band-aid for newline wonkiness that wine sometimes creates
 # path install ($HOME/.local/share/Steam)
 #
 # TODO: Add support for flatpak Steam installs.
-if [[ $has_steamgrid ]]; then
-  something_happened=
+if $has_steamgrid; then
+  something_happened=false
   log_info "copying custom SteamGrid images ..."
 
   for user in "$HOME"/.local/share/Steam/userdata/*; do
     if ! { mkdir -p "$user"/config/grid && cp "$patch_dir"/STEAMGRID/* "$user"/config/grid; }
     then
       log_err "error occured while installing SteamGrid files to $user/config/grid"
-      something_happened=1
+      something_happened=true
     fi
   done
 
-  [[ ! $something_happened ]] && log_info "SteamGrid images installed."
+  ! $something_happened && log_info "SteamGrid images installed."
 fi
 
 
 # S;G launches the default launcher via `Launcher.exe` for some reason instead
 # of the patched `LauncherC0.exe`.
 # Fix by symlinking Launcher to LauncherC0.
-if [[ $needs_sgfix ]]; then
+if $needs_sgfix; then
   log_info "fixing STEINS;GATE launcher issue ..."
 
   # Return info about symlinking process via exit code.
