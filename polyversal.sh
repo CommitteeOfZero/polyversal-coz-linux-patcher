@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+# A couple of important constants.
+# 1.10.1 or later is needed because anything earlier gives a cryptic message
+# about magic numbers.
+ptx_flatpak='com.github.Matoking.protontricks'
+ptx_minversion='1.10.1'
+readonly ptx_flatpak
+readonly ptx_minversion
+
 # Usage syntax: `./polyversal.sh GAME_SHORTNAME PATCH_FOLDER_PATH`
 function print_usage() {
   cat << EOF >&2
@@ -103,35 +111,24 @@ function handle_zenity() {
   esac
 }
 
-# Protontricks version is output as 'protontricks (x.y.z)'
-function ptx_ver() {
-  local ptx_cmd
-  case "$1" in
-    'fp')
-      ptx_cmd='flatpak run com.github.Matoking.protontricks'
-      ;;
-    'sys')
-      ptx_cmd='protontricks'
-      ;;
-  esac
-  $ptx_cmd --version | sed -E 's/^protontricks \((.*)\)$/\1/g'
-}
-
-# Determines whether the specified Protontricks is up to date, i.e. its version
-# number is semantically greater than '1.10.1'. Otherwise running the EXE will
-# fail with a cryptic error message about magic numbers in the proton
-# executable, or something.
+# Determines if Protontricks is up to date, i.e. $ptx_minversion or later.
 # Single argument is which Protontricks to check:
 # 'fp' = Flatpak, 'sys' = system install
 # Other arguments don't do anything. Don't use them!
 # is_ptx_valid <fp|sys>
 function is_ptxvalid() {
-  local cur_ver
+  local ptx_cmd
+  case $1 in
+    fp)
+      ptx_cmd="flatpak run $ptx_flatpak"  ;;
+    sys)
+      ptx_cmd="protontricks"  ;;
+  esac
+
   local older_ver
-  local min_ver=1.10.1
-  cur_ver="$(ptx_ver "$1")"
-  older_ver="$(printf '%s\n%s\n' "$min_ver" "$cur_ver" | sort -V | head -n 1)"
-  [[ $older_ver == "$min_ver" ]]
+  older_ver=$(printf '%s\n%s\n' "protontricks ($ptx_minversion)" "$($ptx_cmd --version)" | sort -V | head -n 1)
+
+  [[ $older_ver == "$ptx_minversion" ]]
 }
 
 
@@ -147,13 +144,12 @@ fi
 # Prefer system install since it plays nice with relative dirs and doesn't need
 # permissions to be setup, but if it's unavailable or outdated then use Flatpak.
 protontricks_cmd='protontricks'
-fp_protontricks='com.github.Matoking.protontricks'
 is_flatpak=false
 if is_cmd protontricks && is_ptxvalid sys; then
   log_info "detected valid system install of protontricks ..."
 else
   if is_cmd protontricks; then
-    log_warn "system install of protontricks has insufficient version: $(ptx_ver sys) < 1.10.1"
+    log_warn "system install of protontricks has insufficient version: $(ptx_ver sys) < $ptx_minversion"
   else
     log_info "system install of protontricks not found"
   fi
@@ -166,20 +162,20 @@ else
   fi
 
   # Install protontricks if it's not already
-  if ! flatpak list | grep -q "$fp_protontricks" -; then
+  if ! flatpak list | grep -q "$ptx_flatpak" -; then
     log_warn "protontricks is not installed on flatpak. attempting installation ..."
-    if ! flatpak install "$fp_protontricks"; then
+    if ! flatpak install "$ptx_flatpak"; then
       log_fatal "an error occurred while installing flatpak protontricks."
       exit 1
     fi
     log_info "flatpak protontricks installed successfully"
   fi
 
-  # Has to have version >= 1.10.1
+  # Has to have version >= $ptx_minversion
   if ! is_ptxvalid fp; then
-    log_warn "flatpak protontricks has insufficient version: $(ptx_ver fp) < 1.10.1"
+    log_warn "flatpak protontricks has insufficient version: $(ptx_ver fp) < $ptx_minversion"
     log_warn "attempting to update ..."
-    if ! flatpak update "$fp_protontricks"; then
+    if ! flatpak update "$ptx_flatpak"; then
       log_fatal "an error occurred while updating flatpak protontricks."
       exit 1
     fi
@@ -187,7 +183,7 @@ else
   fi
 
   is_flatpak=true
-  protontricks_cmd="flatpak run $fp_protontricks"
+  protontricks_cmd="flatpak run $ptx_flatpak"
 fi
 
 
@@ -319,10 +315,10 @@ fi
 # (a) read, and (b) copy and paste a single command.
 compat_mts=
 if $is_deck; then
-  flatpak override --user --filesystem=/run/media/ "$fp_protontricks"
+  flatpak override --user --filesystem=/run/media/ "$ptx_flatpak"
   compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
 fi
-$is_flatpak && flatpak override --user --filesystem="$patch_dir" "$fp_protontricks"
+$is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 
 # Patch the game
 log_info "patching $gamename ..."
