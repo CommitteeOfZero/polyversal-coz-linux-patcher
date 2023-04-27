@@ -28,12 +28,6 @@ function tolower() {
   printf '%s' "$*" | tr '[:upper:]' '[:lower:]'
 }
 
-# Returns whether the argument is a relative path or not, based solely on
-# whether the path starts with a '/'.
-function is_relpath() {
-  printf '%s' "$1" | grep -qE '^/' - && return 1 || return 0
-}
-
 # `command -v COMMAND` prints information about COMMAND, but importantly has
 # exit status 0 if the command exists and 1 if it does not. This true/false
 # value is what we use in this script to determine whether a command is
@@ -50,7 +44,7 @@ txt_green=''
 txt_yellow=''
 txt_red=''
 txt_purple=''
-if is_cmd tput && test -t 2 && [[ "$(tput colors)" -ge 8 ]]; then
+if test -t 2 && [[ $(tput colors) -ge 8 ]]; then
   txt_normal="$(tput sgr0)"
   txt_green="$(tput setaf 2)"
   txt_yellow="$(tput setaf 3)"
@@ -61,26 +55,21 @@ fi
 # log_msg <info|warn|err> <message>
 function log_msg() {
   local sevpfx
-  case "$(tolower "$1")" in
+  case $(tolower "$1") in
     'info' | 'i')
-      sevpfx="${txt_green}INFO:"
-      ;;
+      sevpfx="${txt_green}INFO"  ;;
     'warn' | 'w')
-      sevpfx="${txt_yellow}WARN:"
-      ;;
+      sevpfx="${txt_yellow}WARN" ;;
     'error' | 'err' | 'e')
-      sevpfx="${txt_red}ERR:"
-      ;;
+      sevpfx="${txt_red}ERR" ;;
     'fatal' | 'fat' | 'f')
-      sevpfx="${txt_purple}FATAL:"
-      ;;
+      sevpfx="${txt_purple}FATAL"  ;;
     *)
-      # Well I don't necessarily want the program to die immediately, so just do
-      # whatever ig
-      sevpfx="$1:"
-      ;;
+      # Better than dying for no reason
+      sevpfx="$1"  ;;
   esac
-  printf '%s %s%s\n' "$0: $sevpfx" "${*:2}" "$txt_normal" >&2
+
+  printf '%s: %s: %s\n' "$0" "$sevpfx" "${*:2}${txt_normal}" >&2
 }
 function log_info() { log_msg info "$*"; }
 function log_warn() { log_msg warn "$*"; }
@@ -94,20 +83,17 @@ function log_fatal() { log_msg fatal "$*"; }
 function handle_zenity() {
   local zen_ret=$?
   local closedmsg="$*"
-  [[ ! "$closedmsg" ]] && closedmsg="You must select an option."
+  [[ ! $closedmsg ]] && closedmsg="You must select an option."
   case $zen_ret in
     1)
       log_fatal "$closedmsg"
-      exit 1
-      ;;
+      exit 1 ;;
     5)
       log_fatal "The input dialogue timed out."
-      exit 1
-      ;;
+      exit 1 ;;
     -1)
       log_fatal "An unexpected error occurred using Zenity."
-      exit 1
-      ;;
+      exit 1 ;;
   esac
 }
 
@@ -128,7 +114,7 @@ function is_ptxvalid() {
   local older_ver
   older_ver=$(printf '%s\n%s\n' "protontricks ($ptx_minversion)" "$($ptx_cmd --version)" | sort -V | head -n 1)
 
-  [[ $older_ver == "$ptx_minversion" ]]
+  [[ $older_ver == "protontricks ($ptx_minversion)" ]]
 }
 
 
@@ -149,7 +135,7 @@ if is_cmd protontricks && is_ptxvalid sys; then
   log_info "detected valid system install of protontricks ..."
 else
   if is_cmd protontricks; then
-    log_warn "system install of protontricks has insufficient version: $(ptx_ver sys) < $ptx_minversion"
+    log_warn "system install of protontricks has insufficient version: $(protontricks --version) < $ptx_minversion"
   else
     log_info "system install of protontricks not found"
   fi
@@ -173,7 +159,7 @@ else
 
   # Has to have version >= $ptx_minversion
   if ! is_ptxvalid fp; then
-    log_warn "flatpak protontricks has insufficient version: $(ptx_ver fp) < $ptx_minversion"
+    log_warn "flatpak protontricks has insufficient version: $(flatpak run $ptx_flatpak --version) < $ptx_minversion"
     log_warn "attempting to update ..."
     if ! flatpak update "$ptx_flatpak"; then
       log_fatal "an error occurred while updating flatpak protontricks."
@@ -197,7 +183,7 @@ if [[ $# -eq 0 ]]; then
     exit 1
   fi
 
-  arg_game="$(zenity --list --radiolist --title "Choose Which Game to Patch" \
+  arg_game=$(zenity --list --radiolist --title "Choose Which Game to Patch" \
       --height 400 --width 600            \
       --column "Select" --column "Title"  \
       TRUE  'Chaos;Head NoAH'             \
@@ -205,11 +191,11 @@ if [[ $# -eq 0 ]]; then
       FALSE 'Robotics;Notes Elite'        \
       FALSE 'Chaos;Child'                 \
       FALSE 'Steins;Gate 0'               \
-      FALSE 'Robotics;Notes DaSH')"
+      FALSE 'Robotics;Notes DaSH')
   handle_zenity "You must select which game to patch for the script to work."
 
-  arg_patchdir="$(zenity --file-selection --title "Choose Patch Directory for $arg_game" \
-      --directory --filename "$HOME/Downloads")"
+  arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $arg_game" \
+      --directory --filename "$HOME/Downloads")
   handle_zenity "You must select the directory containing the patch for the script to work."
 elif [[ $# -eq 2 ]]; then
   arg_game="$1"
@@ -229,7 +215,7 @@ patch_exe=
 gamename=
 has_steamgrid=false
 needs_sgfix=false
-case "$(tolower "$arg_game")" in
+case $(tolower "$arg_game") in
   'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
     appid=1961950
     patch_exe='CHNSteamPatch-Installer.exe'
@@ -276,7 +262,7 @@ $has_steamgrid && log_info "using custom SteamGrid images ..."
 # "Valid" here means:
 # (1) it exists, and
 # (2) it contains the expected patch EXE file to execute
-if [[ ! -d "$arg_patchdir" ]]; then
+if [[ ! -d $arg_patchdir ]]; then
   log_fatal "directory '$arg_patchdir' does not exist"
   exit 1
 fi
@@ -293,13 +279,15 @@ fi
 # concatenating the user's CWD and the relative path. Simple testing shows that
 # this hack does not work on Flatpak Protontricks.
 patch_dir="$arg_patchdir"
-if is_relpath "$arg_patchdir"; then
-  if is_cmd realpath; then
-    patch_dir="$(realpath "$arg_patchdir")"
-  else
-    log_warn "'realpath' not available as a command."
-    log_warn "attempting to manually set absolute path; this might cause issues."
-    log_warn "if you get an error citing a non-existent file or directory, try supplying the path to the patch directory as absolute or homedir-relative."
+
+# only relative if it doesn't start with '/'
+if [[ ! $(printf '%s' "$arg_patchdir") =~ ^/ ]]; then
+  log_warn "got relative path for patch directory"
+
+  # the '!' catches if realpath doesn't exist or some other permission error
+  if ! patch_dir=$(realpath "$arg_patchdir"); then
+    log_error "error using 'realpath' to set absolute path patch directory"
+    log_warn "attempting to set absolute path manually, this might cause issues ..."
     patch_dir="$(pwd)/$arg_patchdir"
   fi
 fi
@@ -359,29 +347,30 @@ fi
 # S;G launches the default launcher via `Launcher.exe` for some reason instead
 # of the patched `LauncherC0.exe`.
 # Fix by symlinking Launcher to LauncherC0.
+
+# Return info about symlinking process via exit code.
+# 0 means everything was fine and dandy,
+# 1 means Launcher.exe already points to LauncherC0.exe,
+# 2 means one or both of the files doesn't exist.
+sg_shcmd=$(cat << EOF
+  if [[ ! ( -f Launcher.exe && -f LauncherC0.exe ) ]]; then
+    printf 'Files in %s:\n\n%s\n' "\$(pwd)" "\$(ls)"
+    exit 2
+  fi
+  [[ \$(readlink Launcher.exe) == LauncherC0.exe ]] && exit 1
+  mv Launcher.exe Launcher.exe_bkp
+  ln -s LauncherC0.exe Launcher.exe
+EOF
+)
+
 if $needs_sgfix; then
   log_info "fixing STEINS;GATE launcher issue ..."
 
-  # Return info about symlinking process via exit code.
-  # 0 means everything was fine and dandy,
-  # 1 means Launcher.exe already points to LauncherC0.exe,
-  # 2 means one or both of the files doesn't exist.
-  sg_shcmd="$(cat << EOF
-if [[ ! ( -f Launcher.exe && -f LauncherC0.exe ) ]]; then
-  printf '%s\n\n%s\n' "Files in \$(pwd):" "\$(ls)"
-  exit 2
-fi
-[[ \$(readlink Launcher.exe) == LauncherC0.exe ]] && exit 1
-mv Launcher.exe Launcher.exe_bkp
-ln -s LauncherC0.exe Launcher.exe
-EOF
-)"
   $protontricks_cmd -c "$sg_shcmd" $appid
   cmdret=$?
   case $cmdret in
     0)
-      log_info "launcher symlinked successfully."
-      ;;
+      log_info "launcher symlinked successfully." ;;
     1)
       log_warn "Launcher.exe was already symlinked to LauncherC0.exe."
       log_warn "have you already run this script?"
