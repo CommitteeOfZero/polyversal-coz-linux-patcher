@@ -17,12 +17,14 @@ txt_green=''
 txt_yellow=''
 txt_red=''
 txt_purple=''
+txt_blue=''
 if test -t 2 && [[ $(tput colors) -ge 8 ]]; then
   txt_normal="$(tput sgr0)"
   txt_green="$(tput setaf 2)"
   txt_yellow="$(tput setaf 3)"
   txt_red="$(tput setaf 1)"
   txt_purple="$(tput setaf 5)"
+  txt_blue="$(tput setaf 4)"
 fi
 
 
@@ -30,14 +32,25 @@ fi
 
 function print_usage() {
   cat << EOF >&2
-Usage:
- GUI:
-  $0
- CLI:
-  $0 <game_shortname> <patch_folder_path>
+usage: polyversal.sh [ -d | --debug ] [ -h | --help ] ...
 
-Game shortnames:
-  'chn', 'sg', 'rne', 'cc', 'sg0', 'rnd'
+Use a GUI for selecting the game and patch folder.
+$ $0
+
+Patch game with abbreviation GAME_ABBREV and CoZ patch in PATCH_FOLDER.
+$ $0 GAME_ABBREV PATCH_FOLDER
+
+Game abbreviations:
+  chn
+  sg
+  rne
+  cc
+  sg0
+  rnd
+
+options:
+  -h, --help            Display this help message and exit.
+  -d, --debug           Enable debug logging
 
 EOF
 }
@@ -53,6 +66,8 @@ function log_msg() {
       sevpfx="${txt_red}ERR" ;;
     'fatal' | 'fat' | 'f')
       sevpfx="${txt_purple}FATAL"  ;;
+    'debug' | 'd')
+      sevpfx="${txt_blue}DEBUG" ;;
     *)
       # Better than dying for no reason
       sevpfx="$1"  ;;
@@ -64,6 +79,7 @@ function log_info() { log_msg info "$*"; }
 function log_warn() { log_msg warn "$*"; }
 function log_err() { log_msg err "$*"; }
 function log_fatal() { log_msg fatal "$*"; }
+function log_debug() { $is_debug && log_msg debug "$*"; }
 
 # Want `./polyversal.sh chn` and `./polyversal.sh CHN` to work the same
 function tolower() {
@@ -103,7 +119,7 @@ function handle_zenity() {
 # Single argument is which Protontricks to check:
 # 'fp' = Flatpak, 'sys' = system install
 # Other arguments don't do anything. Don't use them!
-# is_ptx_valid <fp|sys>
+# is_ptxvalid <fp|sys>
 function is_ptxvalid() {
   local ptx_cmd
   case $1 in
@@ -122,18 +138,51 @@ function is_ptxvalid() {
 
 ## Argument Processing ##
 
-# Option parsing here, soon
+if ! parsed_args=$(getopt -n "$0" -o 'hd' --long 'help,debug' -- "$@"); then
+  log_fatal "error parsing command line arguments"
+  print_usage
+  exit 1
+fi
+eval set -- "$parsed_args"
 
-arg_game=
-arg_patchdir=
+is_debug=false
+while true; do
+  case "$1" in
+    -d | --debug)
+      is_debug=true
+      shift ;;
+    -h | --help)
+      print_usage
+      exit 0  ;;
+    --)
+      shift
+      break ;;
+    *)
+      log_fatal "Unexpected option '$1', this should never happen"
+      print_usage
+      exit 1  ;;
+  esac
+done
+
+# GUI mode: 0 args
+# CLI mode: 2 args (game, dir)
+is_gui=false
 if [[ $# -eq 0 ]]; then
-  # Assume GUI mode
   if ! is_cmd zenity; then
-    log_fatal "Zenity is required to run this script in GUI mode. Please make sure you have it installed, then try again."
+    log_fatal "Zenity is required to run this script in GUI mode. Please make sure you have it installed, or use the CLI."
     print_usage
     exit 1
   fi
+  is_gui=true
+elif [[ $# -ne 2 ]]; then
+  log_fatal "Invalid syntax"
+  print_usage
+  exit 1
+fi
 
+arg_game=
+arg_patchdir=
+if $is_gui; then
   arg_game=$(zenity --list --radiolist --title "Choose Which Game to Patch" \
       --height 400 --width 600            \
       --column "Select" --column "Title"  \
@@ -148,13 +197,9 @@ if [[ $# -eq 0 ]]; then
   arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $arg_game" \
       --directory --filename "$HOME/Downloads")
   handle_zenity "You must select the directory containing the patch for the script to work."
-elif [[ $# -eq 2 ]]; then
+else
   arg_game="$1"
   arg_patchdir="$2"
-else
-  printf '%s\n' 'Invalid syntax' >&2
-  print_usage
-  exit 1
 fi
 
 # Get the app ID and what the installer exe should be, based on the shortname.
@@ -227,7 +272,7 @@ fi
 # shell invoked by `protontricks -c` sets its CWD to the game's directory.
 # Prefer `realpath` to do the job, but if it's not available then get it by
 # concatenating the user's CWD and the relative path. Simple testing shows that
-# this hack does not work on Flatpak Protontricks.
+# this hack does not work with the double-dot (..) on Flatpak Protontricks.
 patch_dir="$arg_patchdir"
 
 # only relative if it doesn't start with '/'
