@@ -383,18 +383,27 @@ stty sane  # band-aid for newline wonkiness that wine sometimes creates
 #
 # TODO: Add support for flatpak Steam installs.
 if $has_steamgrid; then
-  something_happened=false
+  has_users=false
+  copies_fine=true
   log_info "copying custom SteamGrid images ..."
 
-  for user in "$HOME"/.local/share/Steam/userdata/*; do
-    if ! { mkdir -p "$user"/config/grid && cp "$patch_dir"/STEAMGRID/* "$user"/config/grid; }
+  for userdir in "$HOME"/.local/share/Steam/userdata/*; do
+    has_users=true
+    griddir="$userdir/config/grid"
+    log_debug "installing SteamGrid in $griddir ..."
+
+    if ! { mkdir -p "$griddir" && cp "$patch_dir"/STEAMGRID/* "$griddir"; }
     then
-      log_err "error occured while installing SteamGrid files to $user/config/grid"
-      something_happened=true
+      copies_fine=false
+      log_err "error occured while installing SteamGrid files to $griddir"
     fi
   done
 
-  ! $something_happened && log_info "SteamGrid images installed."
+  if ! $has_users; then
+    log_error "No users were found in $HOME/.local/share/Steam/userdata."
+  elif $copies_fine; then
+    log_info "SteamGrid images installed successfully"
+  fi
 fi
 
 # S;G launches the default launcher via `Launcher.exe` for some reason instead
