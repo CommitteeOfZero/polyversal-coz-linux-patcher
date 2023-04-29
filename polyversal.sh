@@ -94,6 +94,11 @@ function is_cmd() {
   command -v "$1" > /dev/null
 }
 
+# Happens often enough to warrant a function
+function zenity_error() {
+  $is_gui && zenity --error --title "Polyversal Error" --text "$*"
+}
+
 # Handle non-zero exit statuses from Zenity.
 # **Must be called immediately after zenity command.**
 # Single optional argument is the message to be displayed in the case that the
@@ -105,15 +110,15 @@ function handle_zenity() {
   case $zen_ret in
     1)
       log_fatal "Zenity window was closed while prompting for selection."
-      zenity --error --text "$closedmsg"
+      zenity_error "$closedmsg"
       exit 1 ;;
     5)
       log_fatal "Zenity dialogue timed out while prompting for selection."
-      zenity --error --text "The input dialogue timed out."
+      zenity_error "The input dialogue timed out."
       exit 1 ;;
     -1)
       log_fatal "Zenity returned an unexpected error"
-      zenity --error --text "An unexpected error occurred using Zenity."
+      zenity_error "An unexpected error occurred using Zenity."
       exit 1 ;;
   esac
 }
@@ -141,6 +146,7 @@ function is_ptxvalid() {
 
 ## Argument Processing ##
 
+# Option parsing
 if ! parsed_args=$(getopt -n "$0" -o 'hd' --long 'help,debug' -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
@@ -262,15 +268,13 @@ $has_steamgrid && log_info "using custom SteamGrid images ..."
 # (2) it contains the expected patch EXE file to execute
 if [[ ! -d $arg_patchdir ]]; then
   log_fatal "directory '$arg_patchdir' does not exist"
-  $is_gui && zenity --error \
-      --text "Specified directory '$arg_patchdir' does not exist or is not a directory."
+  zenity_error "Specified directory '$arg_patchdir' does not exist. Please try again."
   exit 1
 fi
 
 if [[ ! -f "$arg_patchdir/$patch_exe" ]]; then
   log_fatal "expected patch EXE '$patch_exe' does not exist within directory '$arg_patchdir'"
-  $is_gui && zenity --error \
-      --text "Directory '$arg_patchdir' does not contain expected EXE '$patch_exe'. Make sure to select the extracted CoZ patch folder containing this file."
+  zenity_error "Directory '$arg_patchdir' does not contain expected EXE '$patch_exe', please try again. Make sure to select the extracted CoZ patch folder containing this file."
   exit 1
 fi
 
@@ -324,8 +328,7 @@ else
   # Nothing doing if no flatpak :(
   if ! is_cmd flatpak; then
     log_fatal "either flatpak nor valid system install of protontricks was detected"
-    $is_gui && zenity --error \
-        --text "Neither Flatpak nor system Protontricks >= $ptx_minversion was found. Please install one of the two and then try again."
+    zenity_error "Neither Flatpak nor system Protontricks >= $ptx_minversion was found. Please install one of the two and then try again."
     exit 1
   fi
 
@@ -334,8 +337,7 @@ else
     log_warn "protontricks is not installed on flatpak. attempting installation ..."
     if ! flatpak install "$ptx_flatpak"; then
       log_fatal "error occurred while installing flatpak protontricks"
-      $is_gui && zenity --error \
-          --text "An error occurred while installing Protontricks via Flatpak."
+      zenity_error "An error occurred while installing Protontricks via Flatpak."
       exit 1
     fi
     log_info "flatpak protontricks installed successfully"
@@ -346,8 +348,7 @@ else
     log_warn "flatpak protontricks out-of-date: $(flatpak run $ptx_flatpak --version) < $ptx_minversion. attempting to update ..."
     if ! flatpak update "$ptx_flatpak"; then
       log_fatal "error occurred while updating flatpak protontricks"
-      $is_gui && zenity --error \
-          --text "An error occurred while updating Flatpak Protontricks."
+      zenity_error "An error occurred while updating Flatpak Protontricks."
       exit 1
     fi
     log_info "flatpak protontricks updated successfully"
@@ -379,8 +380,7 @@ log_info "patching $gamename ..."
 if ! $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
 then
   log_err "patch installation exited with nonzero status"
-  $is_gui && zenity --error \
-      --text "Patch installation exited with an error signal. Check the output for information."
+  zenity_error "Patch installation exited with a nonzero status. Script execution will continue; be wary of errors and check the output for information."
 else
   log_info "patch installation finished, no errors signaled."
 fi
@@ -413,8 +413,7 @@ if $has_steamgrid; then
 
   if ! $has_users; then
     log_error "no users were found in $HOME/.local/share/Steam/userdata"
-    $is_gui && zenity --error \
-        --text "No users were found in $HOME/.local/share/Steam/userdata, unable to install custom SteamGrid images."
+    zenity_error "No users were found in $HOME/.local/share/Steam/userdata, unable to install custom SteamGrid images."
   elif $copies_fine; then
     log_info "SteamGrid images installed successfully"
   fi
@@ -452,10 +451,13 @@ if $needs_sgfix; then
       log_warn "Launcher.exe was already symlinked to LauncherC0.exe. has this script already been run?"  ;;
     68)
       log_err "either Launcher.exe or LauncherC0.exe did not exist in S;G directory"
-      $is_gui && zenity --error \
-          --text "While applying Steins;Gate launcher fix, either Launcher.exe or LauncherC0.exe did not exist in the game's directory. Was the patch installed correctly?"
+      zenity_error "While applying Steins;Gate launcher fix, either Launcher.exe or LauncherC0.exe did not exist in the game's directory. Was the patch installed correctly?"
       ;;
     *)
       log_warn "symlink script exited with unexpected status code $cmdret. consult the output for clues." ;;
   esac
 fi
+
+log_info "Success! Completed without any script-breaking issues. Enjoy the game."
+$is_gui && zenity --info --title 'Polyversal Success!' \
+    --text "Patch installation for $gamename finished. Please verify that the patch is working in case anything went wrong under the hood. Enjoy the game!"
