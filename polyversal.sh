@@ -104,13 +104,16 @@ function handle_zenity() {
   [[ ! $closedmsg ]] && closedmsg="You must select an option."
   case $zen_ret in
     1)
-      log_fatal "$closedmsg"
+      log_fatal "Zenity window was closed while prompting for selection."
+      zenity --error --text "$closedmsg"
       exit 1 ;;
     5)
-      log_fatal "The input dialogue timed out."
+      log_fatal "Zenity dialogue timed out while prompting for selection."
+      zenity --error --text "The input dialogue timed out."
       exit 1 ;;
     -1)
-      log_fatal "An unexpected error occurred using Zenity."
+      log_fatal "Zenity returned an unexpected error"
+      zenity --error --text "An unexpected error occurred using Zenity."
       exit 1 ;;
   esac
 }
@@ -259,11 +262,15 @@ $has_steamgrid && log_info "using custom SteamGrid images ..."
 # (2) it contains the expected patch EXE file to execute
 if [[ ! -d $arg_patchdir ]]; then
   log_fatal "directory '$arg_patchdir' does not exist"
+  $is_gui && zenity --error \
+      --text "Specified directory '$arg_patchdir' does not exist or is not a directory."
   exit 1
 fi
 
 if [[ ! -f "$arg_patchdir/$patch_exe" ]]; then
   log_fatal "expected patch EXE '$patch_exe' does not exist within directory '$arg_patchdir'"
+  $is_gui && zenity --error \
+      --text "Directory '$arg_patchdir' does not contain expected EXE '$patch_exe'. Make sure to select the extracted CoZ patch folder containing this file."
   exit 1
 fi
 
@@ -316,8 +323,9 @@ else
 
   # Nothing doing if no flatpak :(
   if ! is_cmd flatpak; then
-    log_fatal "neither flatpak nor a valid system protontricks was detected."
-    log_fatal "please install one of the two and then try again."
+    log_fatal "either flatpak nor valid system install of protontricks was detected"
+    $is_gui && zenity --error \
+        --text "Neither Flatpak nor system Protontricks >= $ptx_minversion was found. Please install one of the two and then try again."
     exit 1
   fi
 
@@ -325,7 +333,9 @@ else
   if ! flatpak list | grep -q "$ptx_flatpak" -; then
     log_warn "protontricks is not installed on flatpak. attempting installation ..."
     if ! flatpak install "$ptx_flatpak"; then
-      log_fatal "an error occurred while installing flatpak protontricks."
+      log_fatal "error occurred while installing flatpak protontricks"
+      $is_gui && zenity --error \
+          --text "An error occurred while installing Protontricks via Flatpak."
       exit 1
     fi
     log_info "flatpak protontricks installed successfully"
@@ -333,10 +343,11 @@ else
 
   # Has to have version >= $ptx_minversion
   if ! is_ptxvalid fp; then
-    log_warn "flatpak protontricks has insufficient version: $(flatpak run $ptx_flatpak --version) < $ptx_minversion"
-    log_warn "attempting to update ..."
+    log_warn "flatpak protontricks out-of-date: $(flatpak run $ptx_flatpak --version) < $ptx_minversion. attempting to update ..."
     if ! flatpak update "$ptx_flatpak"; then
-      log_fatal "an error occurred while updating flatpak protontricks."
+      log_fatal "error occurred while updating flatpak protontricks"
+      $is_gui && zenity --error \
+          --text "An error occurred while updating Flatpak Protontricks."
       exit 1
     fi
     log_info "flatpak protontricks updated successfully"
@@ -367,8 +378,9 @@ $is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 log_info "patching $gamename ..."
 if ! $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
 then
-  log_err "patch installation exited with nonzero status."
-  log_err "consult the output for errors."
+  log_err "patch installation exited with nonzero status"
+  $is_gui && zenity --error \
+      --text "Patch installation exited with an error signal. Check the output for information."
 else
   log_info "patch installation finished, no errors signaled."
 fi
@@ -400,7 +412,9 @@ if $has_steamgrid; then
   done
 
   if ! $has_users; then
-    log_error "No users were found in $HOME/.local/share/Steam/userdata."
+    log_error "no users were found in $HOME/.local/share/Steam/userdata"
+    $is_gui && zenity --error \
+        --text "No users were found in $HOME/.local/share/Steam/userdata, unable to install custom SteamGrid images."
   elif $copies_fine; then
     log_info "SteamGrid images installed successfully"
   fi
@@ -427,25 +441,21 @@ EOF
 )
 
 if $needs_sgfix; then
-  log_info "fixing STEINS;GATE launcher issue ..."
+  log_info "fixing S;G launcher issue ..."
 
   $protontricks_cmd -c "$sg_shcmd" $appid
   cmdret=$?
   case $cmdret in
     0)
-      log_info "launcher symlinked successfully." ;;
+      log_info "launcher symlinked successfully"  ;;
     42)
-      log_warn "Launcher.exe was already symlinked to LauncherC0.exe."
-      log_warn "have you already run this script?"
-      ;;
+      log_warn "Launcher.exe was already symlinked to LauncherC0.exe. has this script already been run?"  ;;
     68)
-      log_err "one or both of Launcher.exe or LauncherC0.exe did not exist."
-      log_err "check output for contents of the game directory."
-      log_err "was the patch not installed correctly?"
+      log_err "either Launcher.exe or LauncherC0.exe did not exist in S;G directory"
+      $is_gui && zenity --error \
+          --text "While applying Steins;Gate launcher fix, either Launcher.exe or LauncherC0.exe did not exist in the game's directory. Was the patch installed correctly?"
       ;;
     *)
-      log_warn "symlink script exited with unexpected status code $cmdret."
-      log_warn "consult the output for clues."
-      ;;
+      log_warn "symlink script exited with unexpected status code $cmdret. consult the output for clues." ;;
   esac
 fi
