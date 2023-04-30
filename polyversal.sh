@@ -32,7 +32,7 @@ fi
 
 function print_usage() {
   cat << EOF >&2
-usage: polyversal.sh [ -d | --debug ] [ -h | --help ] ...
+usage: polyversal.sh [ -v | --verbose ] [ -h | --help ] ...
 
 Use a GUI for selecting the game and patch folder.
 $ $0
@@ -50,7 +50,7 @@ Game abbreviations:
 
 options:
   -h, --help            Display this help message and exit.
-  -d, --debug           Enable debug logging
+  -v, --verbose         Enable debug logging
 
 EOF
 }
@@ -147,7 +147,7 @@ function is_ptxvalid() {
 ## Argument Processing ##
 
 # Option parsing
-if ! parsed_args=$(getopt -n "$0" -o 'hd' --long 'help,debug' -- "$@"); then
+if ! parsed_args=$(getopt -n "$0" -o 'hv' --long 'help,verbose' -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
   exit 1
@@ -157,7 +157,7 @@ eval set -- "$parsed_args"
 is_debug=false
 while true; do
   case "$1" in
-    -d | --debug)
+    -v | --verbose)
       is_debug=true
       shift ;;
     -h | --help)
@@ -335,7 +335,7 @@ else
   # Install protontricks if it's not already
   if ! flatpak list | grep -q "$ptx_flatpak" -; then
     log_warn "protontricks is not installed on flatpak. attempting installation ..."
-    if ! flatpak install "$ptx_flatpak"; then
+    if ! flatpak install -y "$ptx_flatpak"; then
       log_fatal "error occurred while installing flatpak protontricks"
       zenity_error "An error occurred while installing Protontricks via Flatpak."
       exit 1
@@ -346,7 +346,7 @@ else
   # Has to have version >= $ptx_minversion
   if ! is_ptxvalid fp; then
     log_warn "flatpak protontricks out-of-date: $(flatpak run $ptx_flatpak --version) < $ptx_minversion. attempting to update ..."
-    if ! flatpak update "$ptx_flatpak"; then
+    if ! flatpak update -y "$ptx_flatpak"; then
       log_fatal "error occurred while updating flatpak protontricks"
       zenity_error "An error occurred while updating Flatpak Protontricks."
       exit 1
