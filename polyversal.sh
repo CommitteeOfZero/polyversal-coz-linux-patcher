@@ -309,10 +309,10 @@ if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
 fi
 
 # We need Protontricks either through a system install or through Flatpak to
-# work the magic.
-# Prefer system install since it plays nice with relative dirs and doesn't need
-# permissions to be setup, but if it's unavailable or outdated then use Flatpak.
-protontricks_cmd='protontricks'
+# work the magic. Prefer system install since it plays nice with relative dirs
+# and doesn't need permissions to be setup, but if it's unavailable or outdated
+# then use Flatpak.
+ptx_cmd='protontricks'
 is_flatpak=false
 if is_cmd protontricks && is_ptxvalid sys; then
   log_info "detected valid system install of protontricks ..."
@@ -355,7 +355,7 @@ else
   fi
 
   is_flatpak=true
-  protontricks_cmd="flatpak run $ptx_flatpak"
+  ptx_cmd="flatpak run $ptx_flatpak"
 fi
 
 # Flatpak Protontricks has to be given access to the game's Steam folder to
@@ -377,7 +377,7 @@ $is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 ## Game Patching ##
 
 log_info "patching $gamename ..."
-if ! $protontricks_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
+if ! $ptx_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
 then
   log_err "patch installation exited with nonzero status"
   zenity_error "Patch installation exited with a nonzero status. Script execution will continue; be wary of errors and check the output for information."
@@ -422,40 +422,22 @@ fi
 # S;G launches the default launcher via `Launcher.exe` for some reason instead
 # of the patched `LauncherC0.exe`.
 # Fix by symlinking Launcher to LauncherC0.
-
-# Return info about symlinking process via exit code. Uses larger numbers so
-# they don't get confused with a possible error during other commands.
-# 0 means everything was fine and dandy,
-# 42 means Launcher.exe already points to LauncherC0.exe,
-# 68 means one or both of the files doesn't exist.
-sg_shcmd=$(cat << EOF
-  if [[ ! ( -f Launcher.exe && -f LauncherC0.exe ) ]]; then
-    printf 'Files in %s:\n\n%s\n' "\$(pwd)" "\$(ls)"
-    exit 68
-  fi
-  [[ \$(readlink Launcher.exe) == LauncherC0.exe ]] && exit 42
-  mv Launcher.exe Launcher.exe_bkp
-  ln -s LauncherC0.exe Launcher.exe
-EOF
-)
-
-if $needs_sgfix; then
+if $needs_sgfix && sg_gamedir=$($ptx_cmd -c 'pwd' 412830); then
   log_info "fixing S;G launcher issue ..."
 
-  $protontricks_cmd -c "$sg_shcmd" $appid
-  cmdret=$?
-  case $cmdret in
-    0)
-      log_info "launcher symlinked successfully"  ;;
-    42)
-      log_warn "Launcher.exe was already symlinked to LauncherC0.exe. has this script already been run?"  ;;
-    68)
-      log_err "either Launcher.exe or LauncherC0.exe did not exist in S;G directory"
-      zenity_error "While applying Steins;Gate launcher fix, either Launcher.exe or LauncherC0.exe did not exist in the game's directory. Was the patch installed correctly?"
-      ;;
-    *)
-      log_warn "symlink script exited with unexpected status code $cmdret. consult the output for clues." ;;
-  esac
+  if [[ ! ( -f "$sg_gamedir"/Launcher.exe && -f "$sg_gamedir"/LauncherC0.exe ) ]]; then
+    log_error "one or both of Launcher/C0.exe not found in S;G game directory, unable to fix launcher"
+    zenity_error "Steins;Gate's game directory did not contain one or both of 'Launcher.exe' or 'LauncherC0.exe', unable to apply launcher fix. Was the patch installed correctly?"
+  elif [[ $(readlink "$sg_gamedir"/Launcher.exe) == LauncherC0.exe ]]; then
+    log_warn "Launcher.exe was already symlinked to C0, has this script already been run?"
+  else
+    mv "$sg_gamedir"/Launcher.exe "$sg_gamedir"/Launcher.exe_bkp
+    ln -s LauncherC0.exe "$sg_gamedir"/Launcher.exe
+    log_info "S;G launcher symlinked"
+  fi
+elif $needs_sgfix; then
+  log_error "protontricks error while getting S;G game directory"
+  zenity_error "Protontricks gave an error before the launcher issue could be fixed. Check the output for more information."
 fi
 
 log_info "Success! Completed without any script-breaking issues. Enjoy the game."
