@@ -2,12 +2,20 @@
 
 ## Constants ##
 
+progname="$(basename "$0")"
+readonly progname
+
 # Protontricks 1.10.1 or later is needed because anything earlier gives a
 # cryptic message about magic numbers.
 ptx_flatpak='com.github.Matoking.protontricks'
 ptx_minversion='1.10.1'
 readonly ptx_flatpak
 readonly ptx_minversion
+
+# For log files and the like, all hail ISO 8601.
+# People likely won't be running this more than once in a second.
+exectime=$(date +%Y%m%dT%H%M%S)
+readonly exectime
 
 # I like colors. `tput` seems fairly portable, so it's used here to dictate
 # logging capabilities. Only log with colors if stderr outputs to a terminal
@@ -32,13 +40,13 @@ fi
 
 function print_usage() {
   cat << EOF >&2
-usage: polyversal.sh [ -v | --verbose ] [ -h | --help ] ...
+usage: polyversal.sh [ -v | --verbose ] [ -h | --help ] [ -d | --desktop ] ...
 
 Use a GUI for selecting the game and patch folder.
-$ $0
+$ $progname
 
 Patch game with abbreviation GAME_ABBREV and CoZ patch in PATCH_FOLDER.
-$ $0 GAME_ABBREV PATCH_FOLDER
+$ $progname GAME_ABBREV PATCH_FOLDER
 
 Game abbreviations:
   chn
@@ -49,10 +57,33 @@ Game abbreviations:
   rnd
 
 options:
-  -h, --help            Display this help message and exit.
-  -v, --verbose         Enable debug logging
+  -h, --help                Display this help message and exit
+  -v, --verbose             Enable debug logging
+  -d, --desktop             Disable terminal output and redirect stdin/stderr to
+                            a new log file in 'logs'. This is the default when
+                            running from the desktop file
 
 EOF
+}
+
+# I like colors. Only use them if stderr outputs to a terminal which supports 8
+# or more colors.
+# Pulled into a function that we can call later since --desktop or similar
+# options might change stderr.
+txt_normal=''
+txt_green=''
+txt_yellow=''
+txt_red=''
+txt_purple=''
+txt_blue=''
+function set_logcolors() {
+  if ! test -t 2 || [[ ! $(tput colors) -ge 8 ]]; then return; fi
+  txt_normal="$(tput sgr0)"
+  txt_green="$(tput setaf 2)"
+  txt_yellow="$(tput setaf 3)"
+  txt_red="$(tput setaf 1)"
+  txt_purple="$(tput setaf 5)"
+  txt_blue="$(tput setaf 4)"
 }
 
 function log_msg() {
@@ -73,13 +104,13 @@ function log_msg() {
       sevpfx="$1"  ;;
   esac
 
-  printf '%s: %s: %s\n' "$0" "$sevpfx" "${*:2}${txt_normal}" >&2
+  printf '%s: %s: %s\n' "$progname" "$sevpfx" "${*:2}${txt_normal}" >&2
 }
 function log_info() { log_msg info "$*"; }
 function log_warn() { log_msg warn "$*"; }
 function log_err() { log_msg err "$*"; }
 function log_fatal() { log_msg fatal "$*"; }
-function log_debug() { $is_debug && log_msg debug "$*"; }
+function log_debug() { $mode_debug && log_msg debug "$*"; }
 
 # Want `./polyversal.sh chn` and `./polyversal.sh CHN` to work the same
 function tolower() {
@@ -144,25 +175,32 @@ function is_ptxvalid() {
 }
 
 
+log_info "Starting Polyversal Patcher on $(date) ..."
+
+
 ## Argument Processing ##
 
 # Option parsing
-if ! parsed_args=$(getopt -n "$0" -o 'hv' --long 'help,verbose' -- "$@"); then
+if ! parsed_args=$(getopt -n "$progname" -o 'hvd' --long 'help,verbose,desktop' -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
   exit 1
 fi
 eval set -- "$parsed_args"
 
-is_debug=false
+mode_debug=false
+mode_desktop=false
 while true; do
   case "$1" in
     -v | --verbose)
-      is_debug=true
+      mode_debug=true
       shift ;;
     -h | --help)
       print_usage
       exit 0  ;;
+    -d | --desktop)
+      mode_desktop=true
+      shift ;;
     --)
       shift
       break ;;
@@ -172,6 +210,18 @@ while true; do
       exit 1  ;;
   esac
 done
+
+# Desktop mode means we assume the script is being run by double-clicking on the
+# .desktop file. Since this doesn't render a terminal (by design), we send all
+# output to a logfile within 'logs/' under the same directory as the script.
+logdir="$(dirname "$0")"/logs
+logname="${logdir}/polyversal-${exectime}"  # minus the .log so we can add -wine
+if $mode_desktop; then
+  mkdir -p "$logdir"
+  exec > "${logname}.log" 2>&1
+fi
+
+set_logcolors
 
 # GUI mode: 0 args
 # CLI mode: 2 args (game, dir)
@@ -377,14 +427,21 @@ $is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 ## Game Patching ##
 
 log_info "patching $gamename ..."
-if ! $ptx_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid
+zenity --timeout 10 --info --title 'Info' \
+    --text "$(printf 'Running patcher ...\n(This will disappear in 10 seconds)')" &
+
+ptx_winecmd='$ptx_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid'
+if $mode_desktop; then
+  ptx_winecmd+=' > ${logname}-wine.log 2>&1'
+fi
+if ! eval "$ptx_winecmd"
 then
   log_err "patch installation exited with nonzero status"
   zenity_error "Patch installation exited with a nonzero status. Script execution will continue; be wary of errors and check the output for information."
 else
   log_info "patch installation finished, no errors signaled."
 fi
-stty sane  # band-aid for newline wonkiness that wine sometimes creates
+test -t 0 && stty sane  # band-aid for newline wonkiness that wine sometimes creates
 
 # CHN CoZ patch includes custom SteamGrid images, but since the patch is built for
 # Windows, the placement of those files ends up happening within the Wine prefix 
@@ -399,6 +456,7 @@ if $has_steamgrid; then
   copies_fine=true
   log_info "copying custom SteamGrid images ..."
 
+  # Don't iterate over userdata/*/config/grid because it might not exist.
   for userdir in "$HOME"/.local/share/Steam/userdata/*; do
     has_users=true
     griddir="$userdir/config/grid"
@@ -440,6 +498,6 @@ elif $needs_sgfix; then
   zenity_error "Protontricks gave an error before the launcher issue could be fixed. Check the output for more information."
 fi
 
-log_info "Success! Completed without any script-breaking issues. Enjoy the game."
+log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
 $is_gui && zenity --info --title 'Polyversal Success!' \
-    --text "Patch installation for $gamename finished. Please verify that the patch is working in case anything went wrong under the hood. Enjoy the game!"
+    --text 'Patch installation for '"$gamename"' finished. Please verify that the patch is working in case anything went wrong under the hood. Enjoy the game!'
