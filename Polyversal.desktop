@@ -1,0 +1,9 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=The Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux
+Comment=Helper script for installing CoZ patches with Proton
+Exec=bash "$(dirname "%k")"/polyversal.sh -d
+Terminal=false
+Type=Application
+Categories=Game,
+
