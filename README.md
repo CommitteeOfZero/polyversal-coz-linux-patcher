@@ -10,6 +10,8 @@ From the official repository:
 
 ## TL;DR
 
+Double-click on the provided desktop entry, or invoke the script in one of the following ways:
+
 ```sh
 # GUI mode
 ./polyversal.sh
@@ -19,9 +21,8 @@ From the official repository:
 ```
 
 - Have [Protontricks](https://github.com/Matoking/protontricks) >= 1.10.1 or [Flatpak](https://flatpak.org/setup/) installed
-- Use Proton 7 or newer
-  - Proton 8 is broken for all current Protontricks releases but works fine if building from the latest commit
-- &lt;[GameAbbrev](#game-short-names)&gt; is the game's short name
+- Use Proton 7
+- &lt;GameAbbrev&gt; is the game's [short name](#game-short-names)
 - &lt;PatchDir&gt; is the path to the extracted patch setup directory, preferably absolute or homedir-relative
 
 ## Contents
@@ -32,6 +33,7 @@ From the official repository:
   - [GUI](#gui)
   - [CLI](#cli)
   - [General](#general)
+  - [Command Line Options](#command-line-options)
 - [Notes](#notes)
 - [Game Short Names](#game-short-names)
 - [Known Issues](#known-issues)
@@ -44,32 +46,46 @@ If you have an existing installation of the game using a Proton version other th
 ## Preparations
 
 1. Download and extract [the CoZ patch for your target game](https://sonome.dareno.me/projects).
+
     - Choose the Steam version if given options (i.e. between GOG/Switch).
+
     - There have been reports of Ark extracting files incorrectly; make sure the extracted directory includes a few files whose names start with "Qt5". If GUI extraction proves unsuccessful, consider using [`unzip`](https://linux.die.net/man/1/unzip).
+
 1. This script requires [Protontricks](https://github.com/Matoking/protontricks) version 1.10.1 or newer to correctly apply the patch. If you do not already have this installed, you can either allow the script to install it via [Flatpak](https://flatpak.org/setup/) or [install it yourself](https://github.com/Matoking/protontricks#installation).
+
     - Steam Deck users should prefer the Flatpak version, as SteamOS is liable to delete user-installed system software without notice. The Deck comes with Flatpak pre-installed.
+
     - If you are not using SteamOS 3.x (Deck) or another distro that provides Flatpak as part of the OS, ensure Flatpak is installed on your machine and runnable by your user without root access.
+
 1. Download and install your target game from Steam.
+
 1. Within the game's Properties menu, set its compatibility tool to Proton 7[^proton8].
+
 1. Launch the game once in order to generate a Proton prefix, then quit the game.
+
 1. Download and extract [the latest release of this script](https://github.com/Macitron/Polyversal-Linux-CoZ-Patcher/releases).
+
     - You can also clone this repo or download a copy under the Code button at the top of the page if you want to use the latest (unstable) development version. [Here be dragons](https://en.wikipedia.org/wiki/Here_be_dragons).
-1. Navigate to the folder containing these files using the terminal emulator of your choice. [Konsole](https://youtu.be/t4w0A6ICs0E) is the default for Steam Deck.
-    - For KDE and Steam Deck, the easiest way to do this is to right-click on the folder in the file browser and select "Open Terminal Here".
+
+1. Navigate to the folder containing these files in your file browser.
 
 ## Usage
 
-This script features both a GUI and a CLI mode; the easiest option for most people will likely be the GUI mode.
+This script features both a GUI mode and a CLI mode. The easiest option for most people will likely be the GUI.
+
+If you're running the script from the command line (not clicking on the `.desktop` file), you must first navigate to the script's folder with the terminal. On KDE and Steam Deck this can be done by right-clicking on the folder in the file browser and selecting "Open Terminal Here".
 
 ### GUI
 
-To run the script in GUI mode, simply invoke it with no arguments.
+There are two ways to launch the GUI. The first is to simply double-click on the provided `Polyversal.desktop` file.
+
+The second method is to invoke it on the command line with no arguments:
 
 ```sh
 ./polyversal.sh
 ```
 
-Two initial pop-ups will appear for you to specify the target game and the location of the directory containing the patch, and more windows will appear throughout the script's execution to signal errors or successes.
+After launching, two initial pop-ups will appear for you to specify the target game and the location of the directory containing the patch. More windows will appear throughout the script's execution to signal errors or successes.
 
 You'll know the script has started successfully if you see the following window:
 
@@ -91,21 +107,38 @@ Relative paths are accepted but not guaranteed to work, especially when using Fl
 
 ### General
 
-- As part of the execution of this script, a GUI for the actual patch installer should launch. Follow the instructions in the interface to install the patch.
-![Image of the actual CoZ patcher GUI.](/assets/coz-gui.png "Still gotta finish this game")
-  - If asked for an installation directory by the installer, use: `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game. For example, on the Steam Deck: `Z:/home/deck/.local/share/Steam/steamapps/common/CHAOS;HEAD NOAH`. Then go back to Steam and launch the game. It should now be patched.
+The following info is pertinent regardless of how you launched the script.
 
-- Reaching the 'Success!' message at the end of execution does not necessarily mean the patch was applied successfully; due to the nature of the Wine layer, it can unfortunately be difficult to automatically determine a program's success.
+- During execution, a GUI for the actual patch installer should launch. Follow the instructions in the interface to install the patch.
+
+    ![Image of the actual CoZ patcher GUI.](/assets/coz-gui.png "Still gotta finish this game")
+
+  - If asked for an installation directory by the installer, use `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game. For example, Chaos;Head NoAH on the Steam Deck would be `Z:/home/deck/.local/share/Steam/steamapps/common/CHAOS;HEAD NOAH`.
+
+- Reaching the 'Success!' message at the end of the script does not necessarily mean the patch was applied successfully. Due to the nature of the Wine layer, it can unfortunately be difficult to automatically determine a program's success.
+
   - Be sure to verify that the patch is actually active upon booting up the game.
   <!-- TODO: Specifics go here, link to Chris' tweet about the noids and mention the mouse and whatnot -->
 
 - If running the command does nothing and says `Permission denied`, (which it shouldn't,) try running `bash polyversal.sh` instead as a first step.
 
+### Command Line Options
+
+The following options are available when invoking the script from the terminal.
+
+- `-h | --help`
+  - Print a usage message and exit.
+- `-v | --verbose`
+  - Log `DEBUG`-level messages to output.
+- `-d | --desktop`
+  - Disable all output to the terminal and redirect to a log file in `./logs/`. Creates the directory if it does not exist.
+  - This is the default when launching via the `.desktop` entry, hence the name.
+
 ## Notes
 
 - The script will prefer to use a system install of Protontricks over Flatpak, if present, since there are fewer points of failure.
 
-- If you're using Flatpak and have the game in a non-default Steam library folder, Flatpak might complain about not having access permissions. It will spit out a command as part of its output; copy and paste this command in the terminal to grant it the required access and run the script again to resolve this issue.
+- If you're using Flatpak and have the game in a non-default Steam library folder, Flatpak might complain about not having access permissions. It will spit out a command as part of its output: copy and paste this command in the terminal to grant it the required access and run the script again to resolve this issue.
 
 - If you have an outdated version of Protontricks installed via Flatpak, it will be updated automatically. So, if for some arcane reason you need a specific older version installed, be aware that you will have to downgrade after this script completes.
 
@@ -122,7 +155,7 @@ Here you can find a table of all the SciADV games which have received patches an
 | Steins;Gate 0         |      sg0       | 825630     |
 | Robotics;Notes DaSH   |      rnd       | 1111390    |
 
-Some variations like 'dash' are supported; consult the script itself for a full list.
+Some variations like 'dash' are supported. Consult the script itself for a full list.
 
 ## Known Issues
 
