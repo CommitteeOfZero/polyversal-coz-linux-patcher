@@ -173,8 +173,12 @@ function is_ptxvalid() {
       ptx_cmd="protontricks"  ;;
   esac
 
+  # Decent way to check it's actually functional.
+  local cur_ver
+  ! cur_ver=$($ptx_cmd --version) && return 1
+
   local older_ver
-  older_ver=$(printf '%s\n%s\n' "protontricks ($ptx_minversion)" "$($ptx_cmd --version)" | sort -V | head -n 1)
+  older_ver=$(printf '%s\n%s\n' "protontricks ($ptx_minversion)" "$cur_ver" | sort -V | head -n 1)
 
   [[ $older_ver == "protontricks ($ptx_minversion)" ]]
 }
