@@ -6,4 +6,3 @@ Exec=bash "$(dirname "%k")"/polyversal.sh -d
 Terminal=false
 Type=Application
 Categories=Game,
-
