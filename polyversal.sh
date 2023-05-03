@@ -17,24 +17,6 @@ readonly ptx_minversion
 exectime=$(date +%Y%m%dT%H%M%S)
 readonly exectime
 
-# I like colors. `tput` seems fairly portable, so it's used here to dictate
-# logging capabilities. Only log with colors if stderr outputs to a terminal
-# which supports 8 or more colors.
-txt_normal=''
-txt_green=''
-txt_yellow=''
-txt_red=''
-txt_purple=''
-txt_blue=''
-if test -t 2 && [[ $(tput colors) -ge 8 ]]; then
-  txt_normal="$(tput sgr0)"
-  txt_green="$(tput setaf 2)"
-  txt_yellow="$(tput setaf 3)"
-  txt_red="$(tput setaf 1)"
-  txt_purple="$(tput setaf 5)"
-  txt_blue="$(tput setaf 4)"
-fi
-
 
 ## Functions ##
 
