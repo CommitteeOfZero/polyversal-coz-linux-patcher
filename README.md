@@ -133,6 +133,10 @@ The following options are available when invoking the script from the terminal.
 - `-d | --desktop`
   - Disable all output to the terminal and redirect to a log file in `./logs/`. Creates the directory if it does not exist.
   - This is the default when launching via the `.desktop` entry, hence the name.
+  - If `--desktop` and `--log` are both passed, the one that appears last will take precedence.
+- `--log`
+  - Copy terminal output to a log file in `./logs/`. Unlike `--desktop`, it does not disable all terminal output, but it does disable terminal colors.
+  - If `--desktop` and `--log` are both passed, the one that appears last will take precedence.
 
 ## Notes
 
