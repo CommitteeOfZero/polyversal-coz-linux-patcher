@@ -22,7 +22,8 @@ readonly exectime
 
 function print_usage() {
   cat << EOF >&2
-usage: polyversal.sh [ -v | --verbose ] [ -h | --help ] [ -d | --desktop ] ...
+usage: polyversal.sh [ -v | --verbose ] [ -h | --help ] [ -d | --desktop ]
+                     [ --log ] ...
 
 Use a GUI for selecting the game and patch folder.
 $ $progname
@@ -95,7 +96,10 @@ function log_info() { log_msg info "$*"; }
 function log_warn() { log_msg warn "$*"; }
 function log_err() { log_msg err "$*"; }
 function log_fatal() { log_msg fatal "$*"; }
-function log_debug() { $mode_debug && log_msg debug "$*"; }
+function log_debug() {
+  ! $mode_debug && return 0
+  log_msg debug "$*"
+}
 
 # Want `./polyversal.sh chn` and `./polyversal.sh CHN` to work the same
 function tolower() {
@@ -173,9 +177,8 @@ function is_ptxvalid() {
 log_info "Starting Polyversal Patcher on $(date) ..."
 
 
-## Argument Processing ##
+## Option Parsing ##
 
-# Option parsing
 if ! parsed_args=$(getopt -n "$progname" -o 'hvd' --long 'help,verbose,desktop,log' -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
@@ -230,6 +233,9 @@ if $mode_filelog; then
 fi
 
 set_logcolors
+
+
+## Argument Processing ##
 
 # GUI mode: 0 args
 # CLI mode: 2 args (game, dir)
