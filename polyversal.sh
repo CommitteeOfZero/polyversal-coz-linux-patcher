@@ -130,8 +130,8 @@ function is_cmd() {
 
 # Shadows any call to zenity so we don't accidentally forget an $is_gui
 function zenity() {
-  $is_gui && command zenity "$@"
-  return 0
+  ! $is_gui && return 0
+  command zenity "$@"
 }
 
 # Happens often enough to warrant a function
