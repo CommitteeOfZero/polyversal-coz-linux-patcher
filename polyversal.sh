@@ -63,6 +63,9 @@ options:
                             a new log file in 'logs'. This is the default when
                             running from the desktop file
 
+  --log                     Copy terminal output to a new file log in
+                            'logs'. Disables terminal colors
+
 EOF
 }
 
@@ -128,6 +131,7 @@ function is_cmd() {
 # Shadows any call to zenity so we don't accidentally forget an $is_gui
 function zenity() {
   $is_gui && command zenity "$@"
+  return 0
 }
 
 # Happens often enough to warrant a function
@@ -190,7 +194,7 @@ log_info "Starting Polyversal Patcher on $(date) ..."
 ## Argument Processing ##
 
 # Option parsing
-if ! parsed_args=$(getopt -n "$progname" -o 'hvd' --long 'help,verbose,desktop' -- "$@"); then
+if ! parsed_args=$(getopt -n "$progname" -o 'hvd' --long 'help,verbose,desktop,log' -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
   exit 1
@@ -199,6 +203,7 @@ eval set -- "$parsed_args"
 
 mode_debug=false
 mode_desktop=false
+mode_filelog=false
 while true; do
   case "$1" in
     -v | --verbose)
@@ -207,8 +212,14 @@ while true; do
     -h | --help)
       print_usage
       exit 0  ;;
+    # Actual mode will be determined by the last one to be called in the command.
     -d | --desktop)
       mode_desktop=true
+      mode_filelog=false
+      shift ;;
+    --log)
+      mode_filelog=true
+      mode_desktop=false
       shift ;;
     --)
       shift
@@ -220,14 +231,20 @@ while true; do
   esac
 done
 
-# Desktop mode means we assume the script is being run by double-clicking on the
-# .desktop file. Since this doesn't render a terminal (by design), we send all
-# output to a logfile within 'logs/' under the same directory as the script.
+# mode_desktop and mode_filelog both log to a file, but desktop disables
+# terminal output while filelog does not. Logging is output to a new .log file
+# within 'logs/' under the same directory as this script.
 logdir="$(dirname "$0")"/logs
 logname="${logdir}/polyversal-${exectime}"  # minus the .log so we can add -wine
 if $mode_desktop; then
   mkdir -p "$logdir"
   exec > "${logname}.log" 2>&1
+fi
+if $mode_filelog; then
+  # https://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
+  mkdir -p "$logdir"
+  exec >  >(tee -ia "${logname}.log")
+  exec 2> >(tee -ia "${logname}.log" >&2)
 fi
 
 set_logcolors
@@ -440,7 +457,7 @@ zenity --timeout 10 --info --title 'Info' \
     --text "$(printf 'Running patcher ...\n(This will disappear in 10 seconds)')" &
 
 ptx_winecmd='$ptx_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid'
-if $mode_desktop; then
+if $mode_desktop || $mode_filelog; then
   ptx_winecmd+=' > ${logname}-wine.log 2>&1'
 fi
 if ! eval "$ptx_winecmd"
