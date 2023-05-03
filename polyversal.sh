@@ -125,9 +125,14 @@ function is_cmd() {
   command -v "$1" > /dev/null
 }
 
+# Shadows any call to zenity so we don't accidentally forget an $is_gui
+function zenity() {
+  $is_gui && command zenity "$@"
+}
+
 # Happens often enough to warrant a function
 function zenity_error() {
-  $is_gui && zenity --error --title "Polyversal Error" --text "$*"
+  zenity --error --title "Polyversal Error" --text "$*"
 }
 
 # Handle non-zero exit statuses from Zenity.
@@ -499,5 +504,5 @@ elif $needs_sgfix; then
 fi
 
 log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
-$is_gui && zenity --info --title 'Polyversal Success!' \
+zenity --info --title 'Polyversal Success!' \
     --text 'Patch installation for '"$gamename"' finished. Please verify that the patch is working in case anything went wrong under the hood. Enjoy the game!'
