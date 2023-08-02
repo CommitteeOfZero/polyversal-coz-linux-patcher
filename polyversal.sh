@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## Constants ##
+### Constants ###
 
 progname="$(basename "$0")"
 readonly progname
@@ -18,7 +18,7 @@ exectime=$(date +%Y%m%dT%H%M%S)
 readonly exectime
 
 
-## Functions ##
+### Functions ###
 
 function print_usage() {
   cat << EOF >&2
@@ -94,7 +94,7 @@ function log_msg() {
 }
 function log_info() { log_msg info "$*"; }
 function log_warn() { log_msg warn "$*"; }
-function log_err() { log_msg err "$*"; }
+function log_error() { log_msg err "$*"; }
 function log_fatal() { log_msg fatal "$*"; }
 function log_debug() {
   ! $mode_debug && return 0
@@ -123,6 +123,10 @@ function zenity() {
 # Happens often enough to warrant a function
 function zenity_error() {
   zenity --error --title "Polyversal Error" --text "$*"
+}
+
+function zenity_warn() {
+  zenity --warning --title "Polyversal Warning" --text "$*"
 }
 
 # Handle non-zero exit statuses from Zenity.
@@ -177,7 +181,7 @@ function is_ptxvalid() {
 log_info "Starting Polyversal Patcher on $(date) ..."
 
 
-## Option Parsing ##
+### Option Parsing ###
 
 if ! parsed_args=$(getopt -n "$progname" -o 'hvd' --long 'help,verbose,desktop,log' -- "$@"); then
   log_fatal "error parsing command line arguments"
@@ -235,10 +239,10 @@ fi
 set_logcolors
 
 
-## Argument Processing ##
+### set GUI/CLI mode ###
 
 # GUI mode: 0 args
-# CLI mode: 2 args (game, dir)
+# CLI mode: 2 or 3 args
 is_gui=false
 if [[ $# -eq 0 ]]; then
   if ! is_cmd zenity; then
@@ -247,123 +251,10 @@ if [[ $# -eq 0 ]]; then
     exit 1
   fi
   is_gui=true
-elif [[ $# -ne 2 ]]; then
-  log_fatal "Invalid syntax"
-  print_usage
-  exit 1
-fi
-
-arg_game=
-arg_patchdir=
-if $is_gui; then
-  arg_game=$(zenity --list --radiolist --title "Choose Which Game to Patch" \
-      --height 400 --width 600            \
-      --column "Select" --column "Title"  \
-      TRUE  'Chaos;Head NoAH'             \
-      FALSE 'Steins;Gate'                 \
-      FALSE 'Robotics;Notes Elite'        \
-      FALSE 'Chaos;Child'                 \
-      FALSE 'Steins;Gate 0'               \
-      FALSE 'Robotics;Notes DaSH')
-  handle_zenity "You must select which game to patch for the script to work."
-
-  arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $arg_game" \
-      --directory --filename "$HOME/Downloads")
-  handle_zenity "You must select the directory containing the patch for the script to work."
-else
-  arg_game="$1"
-  arg_patchdir="$2"
-fi
-
-# Get the app ID and what the installer exe should be, based on the shortname.
-# IDs are available in the README.
-# CoZ's naming conventions are beautifully consistent, pls never change them
-appid=
-patch_exe=
-gamename=
-has_steamgrid=false
-needs_sgfix=false
-case $(tolower "$arg_game") in
-  'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
-    appid=1961950
-    patch_exe='CHNSteamPatch-Installer.exe'
-    gamename="Chaos;Head NoAH"
-    has_steamgrid=true
-    ;;
-  'sg' | 'steins'[\;\ ]'gate')
-    appid=412830
-    patch_exe='SGPatch-Installer.exe'
-    gamename="Steins;Gate"
-    needs_sgfix=true
-    ;;
-  'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
-    appid=1111380
-    patch_exe='RNEPatch-Installer.exe'
-    gamename="Robotics;Notes Elite"
-    ;;
-  'cc' | 'chaos'[\;\ ]'child')
-    appid=970570
-    patch_exe='CCPatch-Installer.exe'
-    gamename="Chaos;Child"
-    ;;
-  'sg0' | '0' | 'steins'[\;\ ]'gate 0')
-    appid=825630
-    patch_exe='SG0Patch-Installer.exe'
-    gamename="Steins;Gate 0"
-    ;;
-  'rnd' | 'dash' | 'robotics'[\;\ ]'notes dash')
-    appid=1111390
-    patch_exe='RNDPatch-Installer.exe'
-    gamename="Robotics;Notes DaSH"
-    ;;
-  *)
-    log_fatal "shortname '$arg_game' is invalid"
-    print_usage
-    exit 1
-    ;;
-esac
-
-log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
-$has_steamgrid && log_info "using custom SteamGrid images ..."
-
-# Make sure the patch directory ($arg_patchdir) is valid.
-# "Valid" here means:
-# (1) it exists, and
-# (2) it contains the expected patch EXE file to execute
-if [[ ! -d $arg_patchdir ]]; then
-  log_fatal "directory '$arg_patchdir' does not exist"
-  zenity_error "Specified directory '$arg_patchdir' does not exist. Please try again."
-  exit 1
-fi
-
-if [[ ! -f "$arg_patchdir/$patch_exe" ]]; then
-  log_fatal "expected patch EXE '$patch_exe' does not exist within directory '$arg_patchdir'"
-  zenity_error "Directory '$arg_patchdir' does not contain expected EXE '$patch_exe', please try again. Make sure to select the extracted CoZ patch folder containing this file."
-  exit 1
-fi
-
-# Since we're running `cd` from within protontricks, we need to get the absolute
-# path to the patch directory. Relative paths won't work for this since the
-# shell invoked by `protontricks -c` sets its CWD to the game's directory.
-# Prefer `realpath` to do the job, but if it's not available then get it by
-# concatenating the user's CWD and the relative path. Simple testing shows that
-# this hack does not work with the double-dot (..) on Flatpak Protontricks.
-patch_dir="$arg_patchdir"
-
-# only relative if it doesn't start with '/'
-if [[ ! $arg_patchdir =~ ^/ ]]; then
-  log_warn "got relative path for patch directory"
-
-  # the '!' catches if realpath doesn't exist or some other permission error
-  if ! patch_dir=$(realpath "$arg_patchdir"); then
-    log_error "error using 'realpath' to set absolute path patch directory"
-    log_warn "attempting to set absolute path manually, this might cause issues ..."
-    patch_dir="$(pwd)/$arg_patchdir"
-  fi
 fi
 
 
-## Protontricks Setup ##
+### Protontricks Setup ###
 
 # Detect whether the machine is a Steam Deck.
 is_deck=false
@@ -438,24 +329,74 @@ fi
 $is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 
 
-## Game Patching ##
+### Functionality Functions ###
 
-log_info "patching $gamename ..."
-zenity --timeout 10 --info --title 'Info' \
-    --text "$(printf 'Running patcher ...\n(This will disappear in 10 seconds)')" &
+# Get the target game and initialize the relevant variables
+appid=
+patch_exe=
+gamename=
+function set_game() {
 
-ptx_winecmd='$ptx_cmd -c "cd \"$patch_dir\" && $compat_mts wine $patch_exe" $appid'
-if $mode_desktop || $mode_filelog; then
-  ptx_winecmd+=' > ${logname}-wine.log 2>&1'
-fi
-if ! eval "$ptx_winecmd"
-then
-  log_err "patch installation exited with nonzero status"
-  zenity_error "Patch installation exited with a nonzero status. Script execution will continue; be wary of errors and check the output for information."
-else
-  log_info "patch installation finished, no errors signaled."
-fi
-test -t 0 && stty sane  # band-aid for newline wonkiness that wine sometimes creates
+  # usage: set_game <shortname?>
+  # arg can be omitted if GUI mode is set (no params to script)
+
+  local arg_game
+  if $is_gui; then
+    arg_game=$(zenity --list --radiolist --title "Choose Which Game to Patch" \
+        --height 400 --width 600            \
+        --column "Select" --column "Title"  \
+        TRUE  'Chaos;Head NoAH'             \
+        FALSE 'Steins;Gate'                 \
+        FALSE 'Robotics;Notes Elite'        \
+        FALSE 'Chaos;Child'                 \
+        FALSE 'Steins;Gate 0'               \
+        FALSE 'Robotics;Notes DaSH')
+    handle_zenity "You must select which game to patch for the script to work."
+  else
+    arg_game=$1
+  fi
+
+  # Get the app ID and what the installer exe should be, based on the shortname.
+  # IDs are available in the README.
+  # CoZ's naming conventions are beautifully consistent, pls never change them
+  case $(tolower "$arg_game") in
+    'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
+      appid=1961950
+      patch_exe='CHNSteamPatch-Installer.exe'
+      gamename="Chaos;Head NoAH"
+      ;;
+    'sg' | 'steins'[\;\ ]'gate')
+      appid=412830
+      patch_exe='SGPatch-Installer.exe'
+      gamename="Steins;Gate"
+      ;;
+    'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
+      appid=1111380
+      patch_exe='RNEPatch-Installer.exe'
+      gamename="Robotics;Notes Elite"
+      ;;
+    'cc' | 'chaos'[\;\ ]'child')
+      appid=970570
+      patch_exe='CCPatch-Installer.exe'
+      gamename="Chaos;Child"
+      ;;
+    'sg0' | '0' | 'steins'[\;\ ]'gate 0')
+      appid=825630
+      patch_exe='SG0Patch-Installer.exe'
+      gamename="Steins;Gate 0"
+      ;;
+    'rnd' | 'dash' | 'robotics'[\;\ ]'notes dash')
+      appid=1111390
+      patch_exe='RNDPatch-Installer.exe'
+      gamename="Robotics;Notes DaSH"
+      ;;
+    *)
+      log_fatal "shortname '$arg_game' is invalid"
+      print_usage
+      exit 1
+      ;;
+  esac
+}
 
 # CHN CoZ patch includes custom SteamGrid images, but since the patch is built for
 # Windows, the placement of those files ends up happening within the Wine prefix 
@@ -465,21 +406,25 @@ test -t 0 && stty sane  # band-aid for newline wonkiness that wine sometimes cre
 # path install ($HOME/.local/share/Steam)
 #
 # TODO: Add support for flatpak Steam installs.
-if $has_steamgrid; then
-  has_users=false
-  copies_fine=true
+function copy_steamgrid() {
+
+  # usage: copy_steamgrid <patch dir>
+
+  local patch_dir=$1
+  local has_users=false
+  local copies_fine=true
   log_info "copying custom SteamGrid images ..."
 
   # Don't iterate over userdata/*/config/grid because it might not exist.
   for userdir in "$HOME"/.local/share/Steam/userdata/*; do
     has_users=true
-    griddir="$userdir/config/grid"
+    local griddir="$userdir/config/grid"
     log_debug "installing SteamGrid in $griddir ..."
 
     if ! { mkdir -p "$griddir" && cp "$patch_dir"/STEAMGRID/* "$griddir"; }
     then
       copies_fine=false
-      log_err "error occured while installing SteamGrid files to $griddir"
+      log_error "error occured while installing SteamGrid files to $griddir"
     fi
   done
 
@@ -489,29 +434,258 @@ if $has_steamgrid; then
   elif $copies_fine; then
     log_info "SteamGrid images installed successfully"
   fi
-fi
+}
 
 # S;G launches the default launcher via `Launcher.exe` for some reason instead
 # of the patched `LauncherC0.exe`.
 # Fix by symlinking Launcher to LauncherC0.
-if $needs_sgfix && sg_gamedir=$($ptx_cmd -c 'pwd' 412830); then
-  log_info "fixing S;G launcher issue ..."
+function apply_launcherfix() {
+  local gamedir
+  if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
+    log_error "protontricks error while getting S;G game directory"
+    zenity_error "Protontricks encountered an error before the launcher issue could be fixed. Check the logs for more information."
+    return 1
+  fi
 
-  if [[ ! ( -f "$sg_gamedir"/Launcher.exe && -f "$sg_gamedir"/LauncherC0.exe ) ]]; then
-    log_error "one or both of Launcher/C0.exe not found in S;G game directory, unable to fix launcher"
+  log_info "fixing S;G launcher issue ..."
+  if ! pushd "$gamedir"; then
+    log_error "unable to cd into game directory '$gamedir'"
+    zenity_error "An error occurred while accessing the game directory '$gamedir', unable to apply launcher fix. See the logs for more info."
+    return 2
+  fi
+
+  if [[ ! ( -f Launcher.exe && -f LauncherC0.exe ) ]]; then
+    log_error "one or both of Launcher/C0.exe not found in S;G game directory '$gamedir', unable to fix launcher"
+    ls -l Launcher{,C0}.exe >&2
     zenity_error "Steins;Gate's game directory did not contain one or both of 'Launcher.exe' or 'LauncherC0.exe', unable to apply launcher fix. Was the patch installed correctly?"
-  elif [[ $(readlink "$sg_gamedir"/Launcher.exe) == LauncherC0.exe ]]; then
+  elif [[ $(readlink Launcher.exe) == LauncherC0.exe ]]; then
     log_warn "Launcher.exe was already symlinked to C0, has this script already been run?"
   else
-    mv "$sg_gamedir"/Launcher.exe "$sg_gamedir"/Launcher.exe_bkp
-    ln -s LauncherC0.exe "$sg_gamedir"/Launcher.exe
-    log_info "S;G launcher symlinked"
+    if mv Launcher.exe Launcher.exe_bkp && ln -s LauncherC0.exe Launcher.exe; then
+      log_info "symlinked S;G launcher"
+    else
+      log_error 'unknown error occured symlinking s;g launcher'
+      zenity_error 'An unknown error occurred while applying Steins;Gate launcher fix. Execution will continue; consult the logs for details.'
+    fi
   fi
-elif $needs_sgfix; then
-  log_error "protontricks error while getting S;G game directory"
-  zenity_error "Protontricks gave an error before the launcher issue could be fixed. Check the output for more information."
+  popd
+}
+
+# Undo the launcher fix for uninstallation
+function undo_launcherfix() {
+
+  # usage: undo_launcherfix <game dir>
+
+  local gamedir=$1
+
+  log_info "undoing S;G launcher fix ..."
+  if ! pushd "$gamedir"; then
+    log_error "unable to cd into game directory '$gamedir'"
+    zenity_error "An error occurred while accessing the game directory '$gamedir', check the logs for details."
+    return 1
+  fi
+
+  if [[ ! ( -L Launcher.exe && -f Launcher.exe_bkp && -f LauncherC0.exe ) ]]; then
+    log_warn "expected files/symlink in '$gamedir' was not present, unable to unapply launcher fix"
+    ls -l Launcher{.exe{,_bkp},C0.exe} >&2
+    popd
+    return 2
+  else
+    if unlink Launcher.exe && mv Launcher.exe_bkp Launcher.exe; then
+      log_info "S;G launcher restored to original"
+    else
+      log_error 'unknown error occurred undoing s;g launcher symlink'
+      zenity_error 'An unexpected error occurred while undoing the Steins;Gate launcher fix for uninstallation. Check the logs.'
+    fi
+  fi
+  popd
+}
+
+function install_patch() {
+
+  # usage: install_patch <patch dir>
+
+  ## patch dir validation ##
+
+  local arg_patchdir
+  if $is_gui; then
+    arg_patchdir=$(zenity --file-selection --title "Choose Patch Directory for $gamename" \
+        --directory --filename "$HOME/Downloads")
+    handle_zenity "You must select the directory containing the patch for the script to work."
+  else
+    arg_patchdir=$1
+  fi
+
+  # Make sure the patch directory ($arg_patchdir) is valid.
+  # "Valid" here means:
+  # (1) it exists, and
+  # (2) it contains the expected patch EXE file to execute
+  if [[ ! -d $arg_patchdir ]]; then
+    log_fatal "directory '$arg_patchdir' does not exist"
+    zenity_error "Specified directory '$arg_patchdir' does not exist. Please try again."
+    exit 1
+  fi
+
+  if [[ ! -f "$arg_patchdir/$patch_exe" ]]; then
+    log_fatal "expected patch EXE '$patch_exe' does not exist within directory '$arg_patchdir'"
+    zenity_error "Directory '$arg_patchdir' does not contain expected EXE '$patch_exe', please try again. Make sure to select the extracted CoZ patch folder containing this file."
+    exit 1
+  fi
+
+  local has_steamgrid=false
+  if [[ -d "$arg_patchdir/STEAMGRID" ]]; then
+    has_steamgrid=true
+    log_info "using custom SteamGrid images ..."
+  fi
+
+  # Since we're running `cd` from within protontricks, we need to get the absolute
+  # path to the patch directory. Relative paths won't work for this since the
+  # shell invoked by `protontricks -c` sets its CWD to the game's directory.
+  # Prefer `realpath` to do the job, but if it's not available then get it by
+  # concatenating the user's CWD and the relative path. Simple testing shows that
+  # this hack does not work with the double-dot (..) on Flatpak Protontricks.
+  local patch_dir=$arg_patchdir
+
+  # only relative if it doesn't start with '/'
+  if [[ ! $arg_patchdir =~ ^/ ]]; then
+    log_warn "got relative path for patch directory"
+
+    # the '!' catches if realpath doesn't exist or some other permission error
+    if ! patch_dir=$(realpath "$arg_patchdir"); then
+      log_error "error using 'realpath' to set absolute path patch directory"
+      log_warn "attempting to set absolute path manually, this might cause issues ..."
+      patch_dir="$(pwd)/$arg_patchdir"
+    fi
+  fi
+
+  ## game patching ##
+
+  log_info "patching $gamename ..."
+  zenity --timeout 10 --info --title 'Info' \
+      --text "$(printf 'Running patcher ...\n(This will disappear in 10 seconds)')" &
+
+  local ptx_winecmd="$ptx_cmd -c 'cd \"$patch_dir\" && $compat_mts wine $patch_exe' $appid"
+  if $mode_desktop || $mode_filelog; then
+    ptx_winecmd+=" > ${logname}-wine.log 2>&1"
+  fi
+  log_info "running command: \`$ptx_winecmd\`"
+
+  # this performs the magic
+  if ! eval "$ptx_winecmd"; then
+    log_error "patch installation exited with nonzero status"
+    zenity_error "Patch installation exited with a nonzero status. Script execution will continue; be wary of errors and check the output for information."
+  else
+    log_info "patch installation finished, no errors signaled."
+  fi
+  test -t 0 && stty sane  # band-aid for newline wonkiness that wine sometimes creates
+
+  $has_steamgrid && copy_steamgrid "$patch_dir"
+  [[ $appid == 412830 ]] && apply_launcherfix
+
+  log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
+  zenity --info --title 'Polyversal Success!' \
+      --text "Patch installation for $gamename finished. Please verify that the patch is working in case anything went wrong under the hood. Enjoy the game!"
+}
+
+function uninstall_patch() {
+
+  # usage: uninstall_patch
+
+  log_info "uninstalling $gamename patch ..."
+  zenity --timeout 10 --info --title 'Info' \
+      --text "$(printf 'Running patch uninstaller ...\n(This will disappear in 10 seconds)')" &
+
+  # make sure the uninstaller actually exists
+  local gamedir
+  if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
+    log_error "protontricks error while getting $gamename game directory"
+    zenity_error "Protontricks encountered an error while accessing the $gamename's Steam directory. Unable to uninstall patch."
+    exit 1
+  fi
+
+  local uninstall_exe='nguninstall.exe'
+  if [[ ! -f $gamedir/$uninstall_exe ]]; then
+    log_error "$uninstall_exe not present in game directory '$gamedir', can't run anything"
+    zenity_error "The CoZ uninstaller EXE was not present in the game directory '$gamedir'. Are you sure the patch been installed for this game?"
+    exit 1
+  fi
+
+  local ptx_winecmd="$ptx_cmd -c '$compat_mts wine $uninstall_exe' $appid"
+  if $mode_desktop || $mode_filelog; then
+    ptx_winecmd+=" > ${logname}-wine.log 2>&1"
+  fi
+  log_info "running command: \`$ptx_winecmd\`"
+
+  [[ $appid == 412830 ]] && undo_launcherfix "$gamedir"
+  if ! eval "$ptx_winecmd"; then
+    log_error "patch uninstallation exited with nonzero status"
+    zenity_error "Patch uninstallation exited with a nonzero status."
+  else
+    # Clean up possible leftovers, e.g. FMV project in languagebarrier and
+    # remaining nguninstall.exe. The idea is to get close to 0 external files
+    # remaining in the game dir so that e.g. uninstallation doesn't leave a
+    # dangling folder in steamapps/common.
+    # (even though dxvk logs cause that anyway. /shrug)
+    $ptx_cmd -c 'test -d languagebarrier && rm -rf languagebarrier' $appid
+    $ptx_cmd -c 'test -f nguninstall.exe && rm nguninstall.exe' $appid
+    log_info "patch uninstallation complete, no errors signaled."
+  fi
+  test -t 0 && stty sane
+
+  log_info 'Success! Uninstalled without any script-breaking issues.'
+  zenity --info --title 'Polyversal Success!' \
+      --text "$gamename CoZ patch uninstalled. Please verify that the game works as you expect in case anything went wrong under the hood. We hope you re-install soon :D"
+}
+
+
+### Argument Processing ###
+
+# Get the script mode, i.e. install or uninstall
+arg_mode=
+if $is_gui; then
+  arg_mode=$(zenity --list --radiolist --title 'What would you like to do?'  \
+      --height 400 --width 600            \
+      --column 'Select' --column 'Title'  \
+      TRUE  'Install a patch'             \
+      FALSE 'Uninstall a patch'           )
+  handle_zenity 'Please select a script action to continue.'
+else
+  arg_mode=$1
 fi
 
-log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
-zenity --info --title 'Polyversal Success!' \
-    --text 'Patch installation for '"$gamename"' finished. Please verify that the patch is working in case anything went wrong under the hood. Enjoy the game!'
+case $(tolower "$arg_mode") in
+  install | inst | i | 'install a patch')
+
+    # polyversal install <game> <patch dir>
+
+    if ! $is_gui && [[ $# -ne 3 ]]; then
+      log_fatal "Invalid syntax"
+      print_usage
+      exit 1
+    fi
+    set_game "$2"
+    log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
+    install_patch "$3"
+    ;;
+
+  uninstall | uninst | u | 'uninstall a patch')
+
+    # polyversal uninstall <game>
+
+    if ! $is_gui && [[ $# -ne 2 ]]; then
+      log_fatal "Invalid syntax"
+      print_usage
+      exit 1
+    fi
+    set_game "$2"
+    log_info "uninstalling CoZ patch for $gamename ..."
+    uninstall_patch
+    ;;
+
+  *)
+    # gui selection will never be wrong, ideally lol
+    log_fatal "invalid script verb '$arg_mode'"
+    print_usage
+    exit 1
+    ;;
+esac
