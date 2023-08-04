@@ -24,11 +24,14 @@ function print_usage() {
   cat << EOF >&2
 usage: polyversal [ -v | --verbose ] [ -h | --help ] [ --desktop ] [ --log ] ...
 
-Use a GUI for selecting the game and patch folder.
+Use a GUI for selecting everything graphically.
 $ $progname
 
 Patch game with abbreviation GAME_ABBREV and CoZ patch in PATCH_FOLDER.
-$ $progname GAME_ABBREV PATCH_FOLDER
+$ $progname install GAME_ABBREV PATCH_FOLDER
+
+Uninstall patch for game with abbreviation GAME_ABBREV.
+$ $progname uninstall GAME_ABBREV
 
 Game abbreviations:
   chn
@@ -176,9 +179,6 @@ function is_ptxvalid() {
 }
 
 
-log_info "Starting Polyversal Patcher on $(date) ..."
-
-
 ### Option Parsing ###
 
 if ! parsed_args=$(getopt -n "$progname" -o 'hvd' --long 'help,verbose,desktop,log' -- "$@"); then
@@ -234,7 +234,10 @@ if $mode_filelog; then
   exec 2> >(tee -ia "${logname}.log" >&2)
 fi
 
-set_logcolors
+set_logcolors   # after all the output redirection
+
+
+log_info "Starting Polyversal Patcher on $(date) ..."
 
 
 ### set GUI/CLI mode ###
