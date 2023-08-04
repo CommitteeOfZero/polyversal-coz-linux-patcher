@@ -22,8 +22,7 @@ readonly exectime
 
 function print_usage() {
   cat << EOF >&2
-usage: polyversal.sh [ -v | --verbose ] [ -h | --help ] [ -d | --desktop ]
-                     [ --log ] ...
+usage: polyversal [ -v | --verbose ] [ -h | --help ] [ --desktop ] [ --log ] ...
 
 Use a GUI for selecting the game and patch folder.
 $ $progname
@@ -42,10 +41,9 @@ Game abbreviations:
 options:
   -h, --help                Display this help message and exit
   -v, --verbose             Enable debug logging
-  -d, --desktop             Disable terminal output and redirect stdin/stderr to
+  --desktop                 Disable terminal output and redirect stdin/stderr to
                             a new log file in 'logs'. This is the default when
                             running from the desktop file
-
   --log                     Copy terminal output to a new file log in
                             'logs'. Disables terminal colors
 
@@ -101,7 +99,7 @@ function log_debug() {
   log_msg debug "$*"
 }
 
-# Want `./polyversal.sh chn` and `./polyversal.sh CHN` to work the same
+# Want `./polyversal chn` and `./polyversal CHN` to work the same
 function tolower() {
   printf '%s' "$*" | tr '[:upper:]' '[:lower:]'
 }
@@ -202,7 +200,7 @@ while true; do
       print_usage
       exit 0  ;;
     # Actual mode will be determined by the last one to be called in the command.
-    -d | --desktop)
+    --desktop)
       mode_desktop=true
       mode_filelog=false
       shift ;;
