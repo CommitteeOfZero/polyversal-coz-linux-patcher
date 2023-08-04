@@ -333,6 +333,7 @@ $is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 appid=
 patch_exe=
 gamename=
+gamecode=
 function set_game() {
 
   # usage: set_game <shortname?>
@@ -362,31 +363,37 @@ function set_game() {
       appid=1961950
       patch_exe='CHNSteamPatch-Installer.exe'
       gamename="Chaos;Head NoAH"
+      gamecode=chn
       ;;
     'sg' | 'steins'[\;\ ]'gate')
       appid=412830
       patch_exe='SGPatch-Installer.exe'
       gamename="Steins;Gate"
+      gamecode=sg
       ;;
     'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
       appid=1111380
       patch_exe='RNEPatch-Installer.exe'
       gamename="Robotics;Notes Elite"
+      gamecode=rne
       ;;
     'cc' | 'chaos'[\;\ ]'child')
       appid=970570
       patch_exe='CCPatch-Installer.exe'
       gamename="Chaos;Child"
+      gamecode=cc
       ;;
     'sg0' | '0' | 'steins'[\;\ ]'gate 0')
       appid=825630
       patch_exe='SG0Patch-Installer.exe'
       gamename="Steins;Gate 0"
+      gamecode=sg0
       ;;
     'rnd' | 'dash' | 'robotics'[\;\ ]'notes dash')
       appid=1111390
       patch_exe='RNDPatch-Installer.exe'
       gamename="Robotics;Notes DaSH"
+      gamecode=rnd
       ;;
     *)
       log_fatal "shortname '$arg_game' is invalid"
@@ -434,36 +441,49 @@ function copy_steamgrid() {
   fi
 }
 
-# S;G launches the default launcher via `Launcher.exe` for some reason instead
-# of the patched `LauncherC0.exe`.
-# Fix by symlinking Launcher to LauncherC0.
+# S;G and C;C both launch the default launcher (Launcher.exe and launcher.exe,
+# respectively) instead of the patched LauncherC0.exe.
+# Fix by symlinking default launcher to patched.
 function apply_launcherfix() {
+
+  # usage: apply_launcherfix
+
   local gamedir
   if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
-    log_error "protontricks error while getting S;G game directory"
-    zenity_error "Protontricks encountered an error before the launcher issue could be fixed. Check the logs for more information."
+    log_error "protontricks error while getting $gamecode game directory"
+    zenity_error "Protontricks encountered an error before the launcher issue for $gamename could be fixed. Check the logs for more information."
     return 1
   fi
 
-  log_info "fixing S;G launcher issue ..."
+  log_info "fixing $gamecode launcher issue ..."
   if ! pushd "$gamedir"; then
     log_error "unable to cd into game directory '$gamedir'"
     zenity_error "An error occurred while accessing the game directory '$gamedir', unable to apply launcher fix. See the logs for more info."
     return 2
   fi
-
-  if [[ ! ( -f Launcher.exe && -f LauncherC0.exe ) ]]; then
-    log_error "one or both of Launcher/C0.exe not found in S;G game directory '$gamedir', unable to fix launcher"
-    ls -l Launcher{,C0}.exe >&2
-    zenity_error "Steins;Gate's game directory did not contain one or both of 'Launcher.exe' or 'LauncherC0.exe', unable to apply launcher fix. Was the patch installed correctly?"
-  elif [[ $(readlink Launcher.exe) == LauncherC0.exe ]]; then
-    log_warn "Launcher.exe was already symlinked to C0, has this script already been run?"
+  
+  local defaultlauncher
+  case $gamecode in
+    sg) defaultlauncher=Launcher.exe  ;;
+    cc) defaultlauncher=launcher.exe  ;;
+    *)
+      log_error 'u dun mucked up bozo, which launcher were you even trying to fix'
+      popd
+      return 3  ;;
+  esac
+  
+  if [[ ! ( -f $defaultlauncher && -f LauncherC0.exe ) ]]; then
+    log_error "the default launcher and CoZ launcher were not both present in gamedir '$gamedir', unable to proceed with fix"
+    ls -l "$defaultlauncher" LauncherC0.exe >&2
+    zenity_error "$gamename's game directory did have the default and patched launcher both present, unable to apply launcher fix. Was the patch installed correctly?"
+  elif [[ $(readlink "$defaultlauncher") == LauncherC0.exe ]]; then
+    log_warn "$defaultlauncher was already symlinked to LauncherC0, has this script already been run?"
   else
-    if mv Launcher.exe Launcher.exe_bkp && ln -s LauncherC0.exe Launcher.exe; then
-      log_info "symlinked S;G launcher"
+    if mv "$defaultlauncher" "${defaultlauncher}_bkp" && ln -s LauncherC0.exe "$defaultlauncher"; then
+      log_info "symlinked $gamecode launcher"
     else
-      log_error 'unknown error occured symlinking s;g launcher'
-      zenity_error 'An unknown error occurred while applying Steins;Gate launcher fix. Execution will continue; consult the logs for details.'
+      log_error "unknown error occurred symlinking $gamecode launcher"
+      zenity_error "An unknown error occurred while applying launcher fix to $gamename. Execution will continue; consult the logs for details."
     fi
   fi
   popd
@@ -476,24 +496,34 @@ function undo_launcherfix() {
 
   local gamedir=$1
 
-  log_info "undoing S;G launcher fix ..."
+  log_info "undoing $gamecode launcher fix ..."
   if ! pushd "$gamedir"; then
     log_error "unable to cd into game directory '$gamedir'"
-    zenity_error "An error occurred while accessing the game directory '$gamedir', check the logs for details."
+    zenity_error "An error occurred accessing game directory '$gamedir' while undoing launcher fix, check the logs for details."
     return 1
   fi
 
-  if [[ ! ( -L Launcher.exe && -f Launcher.exe_bkp && -f LauncherC0.exe ) ]]; then
-    log_warn "expected files/symlink in '$gamedir' was not present, unable to unapply launcher fix"
-    ls -l Launcher{.exe{,_bkp},C0.exe} >&2
+  local defaultlauncher
+  case $gamecode in
+    sg) defaultlauncher=Launcher.exe  ;;
+    cc) defaultlauncher=launcher.exe  ;;
+    *)
+      log_error 'uh oh bozo, which launcher were you even trying to fix uhh i mean undo'
+      popd
+      return 3  ;;
+  esac
+
+  if [[ ! ( -L $defaultlauncher && -f ${defaultlauncher}_bkp && -f LauncherC0.exe ) ]]; then
+    log_warn "expected files/symlink in '$gamedir' were not present, unable to unapply launcher fix"
+    ls -l "$defaultlauncher"{,_bkp} LauncherC0.exe >&2
     popd
     return 2
   else
-    if unlink Launcher.exe && mv Launcher.exe_bkp Launcher.exe; then
-      log_info "S;G launcher restored to original"
+    if unlink "$defaultlauncher" && mv "${defaultlauncher}_bkp" "$defaultlauncher"; then
+      log_info "$gamecode launcher restored to original"
     else
-      log_error 'unknown error occurred undoing s;g launcher symlink'
-      zenity_error 'An unexpected error occurred while undoing the Steins;Gate launcher fix for uninstallation. Check the logs.'
+      log_error "unknown error occurred undoing $gamecode launcher symlink"
+      zenity_error "An unexpected error occurred undoing launcher fix for $gamename while uninstalling. Check the logs for details."
     fi
   fi
   popd
@@ -578,7 +608,8 @@ function install_patch() {
   test -t 0 && stty sane  # band-aid for newline wonkiness that wine sometimes creates
 
   $has_steamgrid && copy_steamgrid "$patch_dir"
-  [[ $appid == 412830 ]] && apply_launcherfix
+  # Currently known launcher issues exist with s;g and c;c
+  [[ $gamecode == sg || $gamecode == cc ]] && apply_launcherfix
 
   log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
   zenity --info --title 'Polyversal Success!' \
@@ -588,6 +619,8 @@ function install_patch() {
 function uninstall_patch() {
 
   # usage: uninstall_patch
+  
+  zenity --timeout 2 --info --title ':(' --text ':(' &
 
   log_info "uninstalling $gamename patch ..."
   zenity --timeout 10 --info --title 'Info' \
@@ -614,7 +647,7 @@ function uninstall_patch() {
   fi
   log_info "running command: \`$ptx_winecmd\`"
 
-  [[ $appid == 412830 ]] && undo_launcherfix "$gamedir"
+  [[ $gamecode == sg || $gamecode == cc ]] && undo_launcherfix "$gamedir"
   if ! eval "$ptx_winecmd"; then
     log_error "patch uninstallation exited with nonzero status"
     zenity_error "Patch uninstallation exited with a nonzero status."
