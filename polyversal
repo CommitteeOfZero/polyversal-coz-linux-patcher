@@ -540,7 +540,7 @@ function install_patch() {
 
   local arg_patchdir
   if $is_gui; then
-    arg_patchdir=$(zenity --file-selection --title " Choose $gamename CoZ Patch Directory" \
+    arg_patchdir=$(zenity --file-selection --title "Choose $gamename CoZ Patch Directory" \
         --directory --filename "$HOME/Downloads")
     handle_zenity "You must select the directory containing the patch for the script to work."
   else
