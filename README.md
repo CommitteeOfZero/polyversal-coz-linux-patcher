@@ -85,7 +85,7 @@ Once launched (via either method), some selection pop-ups will appear with more 
 
 You'll know the script has started successfully when you see the following window:
 
-![Image of a Zenity list selection.](/assets/gui1-deck.png "The first window")
+![Image of a Zenity list selection.](/assets/first-screen.png "The first window")
 
 ### CLI
 
