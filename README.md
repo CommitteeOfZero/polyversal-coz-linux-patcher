@@ -10,20 +10,23 @@ From the official repository:
 
 ## TL;DR
 
-Double-click on the provided desktop entry, or invoke the script in one of the following ways:
+For those who already know what they're doing. If you don't, welcome! The [table of contents](#contents) is a good place to start.
 
-```sh
-# GUI mode
-./polyversal.sh
+```bash
+## GUI mode ##
+./polyversal  # or `bash polyversal`
 
-# CLI mode
-./polyversal.sh <GameAbbrev> <PatchDir>
+## CLI mode ##
+./polyversal install <game name> <patch dir>  # install patch
+./polyversal uninstall <game name>            # undo installed patch
 ```
 
-- Have [Protontricks](https://github.com/Matoking/protontricks) >= 1.10.1 or [Flatpak](https://flatpak.org/setup/) installed
-- Use Proton 7
-- &lt;GameAbbrev&gt; is the game's [short name](#game-short-names)
-- &lt;PatchDir&gt; is the path to the extracted patch setup directory, preferably absolute or homedir-relative
+You can also directly launch the GUI by double-clicking the included .desktop entry, if it works. ([It might not](#inconsistency-using-the-desktop-file).)
+
+- `<game name>` is the game's [shortname identifier](#game-short-names)
+- `<patch dir>` is the path to the extracted CoZ patch directory
+- Either [Flatpak](https://flatpak.org/setup/) or a system install of [Protontricks](https://github.com/Matoking/protontricks#installation) >= 1.10.1 is required
+- Use Proton 7; 8+ is unsupported for now
 
 ## Contents
 
@@ -45,38 +48,40 @@ If you have an existing installation of the game using a Proton version other th
 
 ## Preparations
 
-1. Download and extract [the CoZ patch for your target game](https://sonome.dareno.me/projects).
+1. Download and extract[^extraction] the [CoZ patch for your target game](https://sonome.dareno.me/projects).
     - Choose the Steam version if given options (i.e. between GOG/Switch).
-    - There have been reports of Ark extracting files incorrectly; make sure the extracted directory includes a few files whose names start with "Qt5". If GUI extraction proves unsuccessful, consider using [`unzip`](https://linux.die.net/man/1/unzip).
-1. This script requires [Protontricks](https://github.com/Matoking/protontricks) version 1.10.1 or newer to correctly apply the patch. If you do not already have this installed, you can either allow the script to install it via [Flatpak](https://flatpak.org/setup/) or [install it yourself](https://github.com/Matoking/protontricks#installation).
-    - Steam Deck users should prefer the Flatpak version, as SteamOS is liable to delete user-installed system software without notice. The Deck comes with Flatpak pre-installed.
-    - If you are not using SteamOS 3.x (Deck) or another distro that provides Flatpak as part of the OS, ensure Flatpak is installed on your machine and runnable by your user without root access.
+1. This script requires either [Flatpak](https://flatpak.org/setup/) or a system install of [Protontricks](https://github.com/Matoking/protontricks#installation) 1.10.1 or newer to apply the patches.
+    - The Steam Deck comes with Flatpak pre-installed and is good to go out of the box.
 1. Download and install your target game from Steam.
 1. Within the game's Properties menu, set its compatibility tool to Proton 7[^proton8].
 1. Launch the game once in order to generate a Proton prefix, then quit the game.
 1. Download and extract [the latest release of this script](https://github.com/Macitron/Polyversal-Linux-CoZ-Patcher/releases).
-    - You can also clone this repo or download a copy under the Code button at the top of the page if you want to use the latest (unstable) development version. [Here be dragons](https://en.wikipedia.org/wiki/Here_be_dragons).
-1. Navigate to the folder containing these files in your file browser.
+    - You can also clone this repo or download a copy under the Code button at the top of the page if you really want to use the latest (unstable) commit. [Here be dragons](https://en.wikipedia.org/wiki/Here_be_dragons).
+1. Navigate to the folder containing these files in your distro's file manager.
+
+**A quick note on terminology**: Any time we mention "the script", we are referring to *this* script, the Polyversal Patcher, the one you're reading instructions for right now. When we mention "the patch" or "the patcher", we are referring to the actual patch from the Committee of Zero, the one that you downloaded from their website with all the `.dll`'s and `.exe`'s inside.
 
 ## Usage
 
-This script features both a GUI mode and a CLI mode. The easiest option for most people will likely be the GUI.
-
-If you're running it from the command line (i.e. not clicking the `.desktop` file), you must first navigate to the script's folder with the terminal. On KDE and Steam Deck this can be done by right-clicking on the folder in the file browser and selecting "Open Terminal Here".
+This script features both a GUI (Graphical User Interface) mode and a CLI (Command Line Interface) mode. The GUI will likely be the easier option for most.
 
 ### GUI
 
-There are two ways to launch the GUI: double-clicking on the provided `Polyversal.desktop` entry, and running from the command line.
+There are two ways to launch the GUI: using the provided `Polyversal.desktop` entry, and running it from the command line.
 
-The easier option is to simply click on the desktop file, but this is not guaranteed to work on all systems. It will likely function on KDE and Steam Deck but has been known to instead open a text editor on at least one GNOME installation.
+The easier option is to simply double-click the desktop file to launch it, but this is not guaranteed to work on all systems; see the section on [known issues](#inconsistency-using-the-desktop-file). If it doesn't work, you'll have to launch it from the command line. (It's not as scary as it sounds!)
 
-To run from the command line, simply invoke it with no arguments like so:
+To run from the command line, first open a terminal in the directory containing the script. On KDE and Steam Deck, you can do so by right-clicking on `polyversal` from within Dolphin and selecting "Open Terminal Here".
+
+![Image of the "Open Terminal Here" dialog.](/assets/open-term-here.png)
+
+Once the terminal is open, simply invoke it with no arguments by typing the below command and hitting Enter:
 
 ```sh
-./polyversal.sh
+./polyversal
 ```
 
-Once launched (via either method), two initial pop-ups will appear for you to specify the target game and the location of the directory containing the patch. More windows will appear throughout the script's execution to signal errors or successes.
+Once launched (via either method), some selection pop-ups will appear with more windows showing up throughout the script's execution to signal errors or successes.
 
 You'll know the script has started successfully when you see the following window:
 
@@ -84,14 +89,19 @@ You'll know the script has started successfully when you see the following windo
 
 ### CLI
 
-To run the script in CLI mode, invoke it with two arguments as shown below, replacing &lt;GameShortName&gt; with the short name from [the list below](#game-short-names) and &lt;PatchDirectory&gt; with the path to the folder containing the patch.
+To run the script in CLI mode, invoke it in one of the two forms below, replacing `<game name>` with a shortname identifier from [the list below](#game-short-names) and `<patch dir>` with the path to the folder containing the CoZ patch.
 
 ```sh
-./polyversal.sh <GameShortName> <PatchDirectory>
+# Install a patch
+./polyversal install <game name> <patch dir>
+
+# Uninstall a patch
+./polyversal uninstall <game name>
 
 # Examples:
-./polyversal.sh chn ~/Downloads/CHNSteamPatch-v1.0.2-Setup
-./polyversal.sh sg0 /home/myname/Games/SG0/SG0Patch-v2.1.3-Setup
+./polyversal install chn ~/Downloads/CHNSteamPatch-v1.0.2-Setup
+bash polyversal inst sg0 /home/myname/Games/SG0/SG0Patch-v2.1.3-Setup
+./polyversal uninstall dash
 ```
 
 Relative paths are accepted but not guaranteed to work, especially when using Flatpak.[^relpaths] Absolute or homedir-relative paths should be preferred.
@@ -105,6 +115,7 @@ The following info is pertinent regardless of how you launched the script.
     ![Image of the actual CoZ patcher GUI.](/assets/coz-gui.png "Still gotta finish this game")
 
   - If asked for an installation directory by the installer, use `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game. For example, Chaos;Head NoAH on the Steam Deck would be `Z:/home/deck/.local/share/Steam/steamapps/common/CHAOS;HEAD NOAH`.
+  - If you have your game installed in a non-standard library location, hopefully you can remember where you set it up well enough to know the path.
 
 - Reaching the 'Success!' message at the end of the script does not necessarily mean the patch was applied successfully. Due to the nature of the Wine layer, it can unfortunately be difficult to automatically determine a program's success.
 
@@ -119,7 +130,7 @@ The following options are available when invoking the script from the terminal.
   - Print a usage message and exit.
 - `-v | --verbose`
   - Log `DEBUG`-level messages to output.
-- `-d | --desktop`
+- `--desktop`
   - Disable all output to the terminal and redirect to a log file in `./logs/`. Creates the directory if it does not exist.
   - This is the default when launching via the `.desktop` entry, hence the name.
   - If `--desktop` and `--log` are both passed, the one that appears last will take precedence.
@@ -154,15 +165,11 @@ Some variations like 'dash' are supported. Consult the script itself for a full 
 
 ## Known Issues
 
-### Steins;Gate Symlinks
+### Inconsistency Using the `.desktop` File
 
-The installation of the *Steins;Gate* patch involves some additional symlinking to fix an issue related to the game's launcher. These changes are **not** automatically undone during uninstallation via `nguninstall.exe`, so they must be done manually. Fortunately, this is as simple as copying and pasting the command below. **To avoid potential issues, make sure to run this *before* uninstalling the patch,** if you decide to do so :(
+It seems to be a coin toss whether the included .desktop entry will actually launch the script or open it in the default text editor. If it opens a bunch of monospaced text that starts with `[Desktop Entry]`, you will have to launch from the command line.
 
-```sh
-# If using flatpak, replace `protontricks` with
-# `flatpak run com.github.Matoking.protontricks`
-protontricks -c 'unlink Launcher.exe && mv Launcher.exe_bkp Launcher.exe' 412830
-```
+There have also been at least two documented cases of the script launching and appearing to complete successfully, but then the game is not patched on startup. It is unknown why this happens, and if it happens to you then you will also have to launch from the command line.
 
 ### Hanging Wine Processes
 
@@ -170,7 +177,7 @@ A wine process is spawned in the course of running the script for the purpose of
 
 ## Troubleshooting
 
-If you run into any problems executing the Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux, please feel free to file an issue or pull request in relation. **Please do not complain to the Committee of Zero directly**: if you need someone to yell at, ping `Macitron3000#0766` on Discord.
+If you run into any problems running the Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux, please feel free to file an issue or pull request in relation. **Please do not complain to the Committee of Zero directly**: if you need someone to yell at, ping `macitron3000` in `#bug-reports` on the CoZ server.
 
 The PLSPfCoZSASPoL has been tested on Arch Linux, Fedora 37, and SteamOS 3.x, so pull requests to address issues specific to other Linux distributions are especially appreciated.
 
@@ -178,4 +185,6 @@ The PLSPfCoZSASPoL has been tested on Arch Linux, Fedora 37, and SteamOS 3.x, so
 
 [^winehang]: Phenomenon observed on Arch Linux, kernel 6.2.6-arch1-1. I noticed this one day after doing multiple test runs and finding ~25 orphaned wine processes on btop, seems like it might just affect Proton Experimental versions.
 
-[^proton8]: Proton 8 and Experimental are currently broken for all relases of Protontricks. This has been fixed if you build your Protontricks from the latest commit (e.g. AUR git version), but it's safer to just use Proton 7.
+[^proton8]: Proton 8 supposedly works by now but has not been tested for support. If you run into issues, please try with 7.0-6 before troubleshooting further.
+
+[^extraction]: There have been reports of Ark extracting files incorrectly; make sure the extracted directory includes a few files whose names start with "Qt5". If GUI extraction proves unsuccessful, consider using [`unzip`](https://linux.die.net/man/1/unzip).
