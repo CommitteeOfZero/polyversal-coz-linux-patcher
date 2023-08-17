@@ -1,12 +1,8 @@
 # The Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux
 
-This project is a fork of [the Committee of Zero's official Multiversal Linux patcher](https://github.com/CommitteeOfZero/multiversal-coz-linux-patcher) and aims to provide extended functionality with error checking, a simple GUI, and automation of game-specific fixes, among other things.
+These instructions and the included Bash script are intended to streamline installation of CoZ patches for Steam Play, including on Steam Deck.
 
-From the official repository:
-
-> These instructions and the included Bash script are intended to streamline installation of CoZ patches for Steam Play, including on Steam Deck.
->
-> *This script is possible in no small part due to the work of [/u/PartTimeBento](https://www.reddit.com/u/PartTimeBento), who [provided many of the necessary instructions to automate this in a post on Reddit](https://www.reddit.com/r/SteamDeck/comments/uitpca/patching_steinsgate_and_steinsgate0_on_the).*
+This script is possible in no small part due to the work of [/u/PartTimeBento](https://www.reddit.com/u/PartTimeBento), who [provided many of the necessary instructions to automate this in a post on Reddit](https://www.reddit.com/r/SteamDeck/comments/uitpca/patching_steinsgate_and_steinsgate0_on_the).
 
 ## TL;DR
 
@@ -21,7 +17,7 @@ For those who already know what they're doing. If you don't, welcome! The [table
 ./polyversal uninstall <game name>            # undo installed patch
 ```
 
-You can also directly launch the GUI by double-clicking the included .desktop entry, if it works. ([It might not](#inconsistency-using-the-desktop-file).)
+You can also directly launch the GUI by double-clicking the included .desktop entry, if it works. ([It might not.](#inconsistency-using-the-desktop-file))
 
 - `<game name>` is the game's [shortname identifier](#game-short-names)
 - `<patch dir>` is the path to the extracted CoZ patch directory
@@ -44,7 +40,7 @@ You can also directly launch the GUI by double-clicking the included .desktop en
 
 ## Backing up saved games and wiping a Proton prefix
 
-If you have an existing installation of the game using a Proton version other than Valve Proton 7 (Proton 7.0-6 or later, to be specific), you will need to wipe the Proton prefix prior to beginning [preparation](#preparations). You should back up your saved games to another directory prior to wiping the prefix; this helps avoid any potential issues caused by a malfunction in the implementation of Steam Cloud saves for the title in question. You can move the saved games back into the Proton prefix after [running the patcher](#usage).
+If you have an existing installation of the game using a Proton version other than Valve Proton 7 (Proton 7.0-6 or later, to be specific), you will need to wipe the Proton prefix prior to beginning [preparation](#preparations). You should back up your saved games to another directory prior to wiping the prefix; this helps avoid any potential issues caused by a malfunction in the implementation of Steam Cloud saves for the title in question. You can move the saved games back into the Proton prefix after [running the script](#usage).
 
 ## Preparations
 
@@ -55,11 +51,11 @@ If you have an existing installation of the game using a Proton version other th
 1. Download and install your target game from Steam.
 1. Within the game's Properties menu, set its compatibility tool to Proton 7[^proton8].
 1. Launch the game once in order to generate a Proton prefix, then quit the game.
-1. Download and extract [the latest release of this script](https://github.com/Macitron/Polyversal-Linux-CoZ-Patcher/releases).
-    - You can also clone this repo or download a copy under the Code button at the top of the page if you really want to use the latest (unstable) commit. [Here be dragons](https://en.wikipedia.org/wiki/Here_be_dragons).
+1. Download and extract [the latest release of this script](https://github.com/CommitteeOfZero/multiversal-coz-linux-patcher/releases).
+    - You can also clone this repo or download a copy under the Code button at the top of the page if you really want to use the latest (unstable) commit. [Here be dragons.](https://en.wikipedia.org/wiki/Here_be_dragons)
 1. Navigate to the folder containing these files in your distro's file manager.
 
-**A quick note on terminology**: Any time we mention "the script", we are referring to *this* script, the Polyversal Patcher, the one you're reading instructions for right now. When we mention "the patch" or "the patcher", we are referring to the actual patch from the Committee of Zero, the one that you downloaded from their website with all the `.dll`'s and `.exe`'s inside.
+**A quick note on terminology**: Any time we mention "the script", we are referring to *this* script, the Polyversal Patcher, the one you're reading instructions for right now. When we mention "the patch" or "the patcher", we are referring to the actual Committee of Zero patch, the one that you downloaded from the official website with all the `.dll`'s and `.exe`'s inside.
 
 ## Usage
 
@@ -142,7 +138,7 @@ The following options are available when invoking the script from the terminal.
 
 - The script will prefer to use a system install of Protontricks over Flatpak, if present, since there are fewer points of failure.
 
-- If you're using Flatpak and have the game in a non-default Steam library folder, Flatpak might complain about not having access permissions. It will spit out a command as part of its output: copy and paste this command in the terminal to grant it the required access and run the script again to resolve this issue.
+- If you're using Flatpak and have the game installed in a non-default Steam library folder, Flatpak might complain about not having access permissions. If the script fails, check the output/logs for a message from Flatpak telling you exactly what command to copy+paste in order to do so.
 
 - Flatpak Protontricks will be updated automatically if it's outdated. So, if for some arcane reason you need a specific older version installed, be aware that you will have to downgrade after this script completes.
 
@@ -169,7 +165,7 @@ Some variations like 'dash' are supported. Consult the script itself for a full 
 
 It seems to be a coin toss whether the included .desktop entry will actually launch the script or open it in the default text editor. If it opens a bunch of monospaced text that starts with `[Desktop Entry]`, you will have to launch from the command line.
 
-There have also been at least two documented cases of the script launching and appearing to complete successfully, but then the game is not patched on startup. It is unknown why this happens, and if it happens to you then you will also have to launch from the command line.
+There have also been at least two documented cases of the script launching and appearing to complete successfully, but then the game is not patched on startup. It is unknown why this happens, and if it happens to you then launching from the command line will likely fix it.
 
 ### Hanging Wine Processes
 
@@ -177,7 +173,7 @@ A wine process is spawned in the course of running the script for the purpose of
 
 ## Troubleshooting
 
-If you run into any problems running the Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux, please feel free to file an issue or pull request in relation. **Please do not complain to the Committee of Zero directly**: if you need someone to yell at, ping `macitron3000` in `#bug-reports` on the CoZ server.
+If you run into any problems running the Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux, please feel free to file an issue or pull request in relation.
 
 The PLSPfCoZSASPoL has been tested on Arch Linux, Fedora 37, and SteamOS 3.x, so pull requests to address issues specific to other Linux distributions are especially appreciated.
 

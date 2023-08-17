@@ -64,7 +64,7 @@ txt_red=''
 txt_purple=''
 txt_blue=''
 function set_logcolors() {
-  if ! test -t 2 || [[ ! $(tput colors) -ge 8 ]]; then return; fi
+  if ! test -t 2 || [[ ! $(tput colors) -ge 8 ]]; then return 0; fi
   txt_normal="$(tput sgr0)"
   txt_green="$(tput setaf 2)"
   txt_yellow="$(tput setaf 3)"
@@ -181,7 +181,7 @@ function is_ptxvalid() {
 
 ### Option Parsing ###
 
-if ! parsed_args=$(getopt -n "$progname" -o 'hvd' --long 'help,verbose,desktop,log' -- "$@"); then
+if ! parsed_args=$(getopt -n "$progname" -o 'hv' --long 'help,verbose,desktop,log' -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
   exit 1
@@ -339,12 +339,12 @@ gamename=
 gamecode=
 function set_game() {
 
-  # usage: set_game <shortname?>
+  # usage: set_game <shortname?> <zenity msg>
   # arg can be omitted if GUI mode is set (no params to script)
 
   local arg_game
   if $is_gui; then
-    arg_game=$(zenity --list --radiolist --title "Choose Which Game to Patch" \
+    arg_game=$(zenity --list --radiolist --title "$2" \
         --height 400 --width 600            \
         --column "Select" --column "Title"  \
         TRUE  'Chaos;Head NoAH'             \
@@ -697,7 +697,7 @@ case $(tolower "$arg_mode") in
       print_usage
       exit 1
     fi
-    set_game "$2"
+    set_game "$2" "Choose Which Game to Patch"
     log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
     install_patch "$3"
     ;;
@@ -711,7 +711,7 @@ case $(tolower "$arg_mode") in
       print_usage
       exit 1
     fi
-    set_game "$2"
+    set_game "$2" "Choose Which Patch to Uninstall"
     log_info "uninstalling CoZ patch for $gamename ..."
     uninstall_patch
     ;;
