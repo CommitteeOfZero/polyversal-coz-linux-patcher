@@ -17,6 +17,14 @@ readonly ptx_minversion
 exectime=$(date +%Y%m%dT%H%M%S)
 readonly exectime
 
+VERSION=2.0.0
+REPO_ID="CommitteeOfZero/multiversal-coz-linux-patcher"
+URL_RELEASES="https://github.com/${REPO_ID}/releases"
+URL_API_LATEST="https://api.github.com/repos/${REPO_ID}/releases/latest"
+readonly VERSION
+readonly URL_RELEASES
+readonly URL_API_LATEST
+
 
 ### Functions ###
 
@@ -671,8 +679,44 @@ function uninstall_patch() {
       --text "$gamename CoZ patch uninstalled. Please verify that the game works as you expect in case anything went wrong under the hood. We hope you re-install soon :D"
 }
 
+function check_update() {
+
+  # usage: check_update
+
+  local curl_out
+  if ! curl_out=$(
+    curl -SsL -m 10                             \
+      -H "Accept: application/vnd.github+json"  \
+      -H "X-GitHub-Api-Version: 2022-11-28"     \
+      "$URL_API_LATEST"
+  ); then
+    log_error "cURL encountered an error retrieving the latest script version from GitHub"
+    return 1
+  fi
+
+  local latest_version
+  if ! latest_version=$(printf %s "$curl_out" | grep '"tag_name"' | grep -oE '[[:digit:]]+(\.[[:digit:]]+){2}'); then
+    log_error "GitHub version output differed from expected format"
+    log_debug "cURL output: $curl_out"
+    return 2
+  fi
+
+  local newer_version
+  newer_version=$(printf "%s\n%s" "$latest_version" "$VERSION" | sort -V | tail -n 1)
+  if [[ $newer_version == "$VERSION" ]]; then
+    log_info "polyversal is up-to-date"
+    return 0
+  fi
+
+  log_warn "Polyversal Patcher is out of date! using v$VERSION, you can download v$newer_version from $URL_RELEASES"
+  zenity --info --title 'New Update Available!' \
+      --text "A new version of the Polyversal Patcher (v$newer_version) is available! You can download it from <a href=\"$URL_RELEASES\">the releases page</a>."
+}
+
 
 ### Argument Processing ###
+
+check_update &
 
 # Get the script mode, i.e. install or uninstall
 arg_mode=
