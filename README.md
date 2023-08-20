@@ -150,12 +150,12 @@ Here you can find a table of all the SciADV games which have received patches an
 
 | **Game**              | **Short Name** | **App ID** |
 | ----------------      |:--------------:|:----------:|
-| Chaos;Head NoAH       |      chn       | 1961950    |
-| Steins;Gate           |       sg       | 412830     |
-| Robotics;Notes Elite  |      rne       | 1111380    |
-| Chaos;Child           |       cc       | 970570     |
-| Steins;Gate 0         |      sg0       | 825630     |
-| Robotics;Notes DaSH   |      rnd       | 1111390    |
+| CHAOS;HEAD NOAH       |      chn       | 1961950    |
+| STEINS;GATE           |       sg       | 412830     |
+| ROBOTICS;NOTES ELITE  |      rne       | 1111380    |
+| CHAOS;CHILD           |       cc       | 970570     |
+| STEINS;GATE 0         |      sg0       | 825630     |
+| ROBOTICS;NOTES DaSH   |      rnd       | 1111390    |
 
 Some variations like 'dash' are supported. Consult the script itself for a full list.
 

@@ -355,12 +355,12 @@ function set_game() {
     arg_game=$(zenity --list --radiolist --title "$2" \
         --height 400 --width 600            \
         --column "Select" --column "Title"  \
-        TRUE  'Chaos;Head NoAH'             \
-        FALSE 'Steins;Gate'                 \
-        FALSE 'Robotics;Notes Elite'        \
-        FALSE 'Chaos;Child'                 \
-        FALSE 'Steins;Gate 0'               \
-        FALSE 'Robotics;Notes DaSH')
+        TRUE  'CHAOS;HEAD NOAH'             \
+        FALSE 'STEINS;GATE'                 \
+        FALSE 'ROBOTICS;NOTES ELITE'        \
+        FALSE 'CHAOS;CHILD'                 \
+        FALSE 'STEINS;GATE 0'               \
+        FALSE 'ROBOTICS;NOTES DaSH')
     handle_zenity "You must select which game to patch for the script to work."
   else
     arg_game=$1
@@ -373,37 +373,37 @@ function set_game() {
     'chn' | 'ch' | 'chaos'[\;\ ]'head noah')
       appid=1961950
       patch_exe='CHNSteamPatch-Installer.exe'
-      gamename="Chaos;Head NoAH"
+      gamename="CHAOS;HEAD NOAH"
       gamecode=chn
       ;;
     'sg' | 'steins'[\;\ ]'gate')
       appid=412830
       patch_exe='SGPatch-Installer.exe'
-      gamename="Steins;Gate"
+      gamename="STEINS;GATE"
       gamecode=sg
       ;;
     'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
       appid=1111380
       patch_exe='RNEPatch-Installer.exe'
-      gamename="Robotics;Notes Elite"
+      gamename="ROBOTICS;NOTES ELITE"
       gamecode=rne
       ;;
     'cc' | 'chaos'[\;\ ]'child')
       appid=970570
       patch_exe='CCPatch-Installer.exe'
-      gamename="Chaos;Child"
+      gamename="CHAOS;CHILD"
       gamecode=cc
       ;;
     'sg0' | '0' | 'steins'[\;\ ]'gate 0')
       appid=825630
       patch_exe='SG0Patch-Installer.exe'
-      gamename="Steins;Gate 0"
+      gamename="STEINS;GATE 0"
       gamecode=sg0
       ;;
     'rnd' | 'dash' | 'robotics'[\;\ ]'notes dash')
       appid=1111390
       patch_exe='RNDPatch-Installer.exe'
-      gamename="Robotics;Notes DaSH"
+      gamename="ROBOTICS;NOTES DaSH"
       gamecode=rnd
       ;;
     *)
