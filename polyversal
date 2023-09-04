@@ -34,7 +34,8 @@ readonly URL_API_LATEST
 
 function print_usage() {
   cat << EOF >&2
-usage: polyversal [ -v | --verbose ] [ -h | --help ] [ --desktop ] [ --log ] ...
+usage: polyversal [ -v | --verbose ] [ -h | --help ] [ --desktop ] [ --log ]
+                  [ -r | --steamroot ] ...
 
 Use a GUI for selecting everything graphically.
 $ $progname
@@ -62,6 +63,8 @@ options:
                             running from the desktop file
   --log                     Copy terminal output to a new file log in
                             'logs'. Disables terminal colors
+  -r, --steamroot NEW_ROOT  Use NEW_ROOT as Steam's root directory instead of
+                            ~/.local/share/Steam
 
 EOF
 }
@@ -194,7 +197,7 @@ function is_ptxvalid() {
 
 ### Option Parsing ###
 
-if ! parsed_args=$(getopt -n "$progname" -o 'hv' --long 'help,verbose,desktop,log' -- "$@"); then
+if ! parsed_args=$(getopt -n "$progname" -o 'hvr:' --long 'help,verbose,desktop,log,steamroot:' -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
   exit 1
@@ -204,6 +207,7 @@ eval set -- "$parsed_args"
 mode_debug=false
 mode_desktop=false
 mode_filelog=false
+STEAMROOT=$HOME/.local/share/Steam
 while true; do
   case "$1" in
     -v | --verbose)
@@ -221,6 +225,9 @@ while true; do
       mode_filelog=true
       mode_desktop=false
       shift ;;
+    -r | --steamroot)
+      STEAMROOT=$2
+      shift 2 ;;
     --)
       shift
       break ;;
@@ -444,7 +451,7 @@ function copy_steamgrid() {
   log_info "copying custom SteamGrid images ..."
 
   # Don't iterate over userdata/*/config/grid because it might not exist.
-  for userdir in "$HOME"/.local/share/Steam/userdata/*; do
+  for userdir in "$STEAMROOT"/userdata/*; do
     has_users=true
     local griddir="$userdir/config/grid"
     log_debug "installing SteamGrid in $griddir ..."
@@ -457,8 +464,8 @@ function copy_steamgrid() {
   done
 
   if ! $has_users; then
-    log_error "no users were found in $HOME/.local/share/Steam/userdata"
-    zenity_error "No users were found in $HOME/.local/share/Steam/userdata, unable to install custom SteamGrid images."
+    log_error "no users were found in $STEAMROOT/userdata"
+    zenity_error "No users were found in $STEAMROOT/userdata, unable to install custom SteamGrid images."
   elif $copies_fine; then
     log_info "SteamGrid images installed successfully"
   fi
