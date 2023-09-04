@@ -5,6 +5,9 @@
 progname="$(basename "$0")"
 readonly progname
 
+DATADIR=$(dirname "$0")
+readonly DATADIR
+
 # Protontricks 1.10.1 or later is needed because anything earlier gives a
 # cryptic message about magic numbers.
 ptx_flatpak='com.github.Matoking.protontricks'
@@ -22,6 +25,7 @@ REPO_ID="CommitteeOfZero/multiversal-coz-linux-patcher"
 URL_RELEASES="https://github.com/${REPO_ID}/releases"
 URL_API_LATEST="https://api.github.com/repos/${REPO_ID}/releases/latest"
 readonly VERSION
+readonly REPO_ID
 readonly URL_RELEASES
 readonly URL_API_LATEST
 
@@ -127,7 +131,7 @@ function is_cmd() {
 # Shadows any call to zenity so we don't accidentally forget an $is_gui
 function zenity() {
   ! $is_gui && return 0
-  command zenity "$@"
+  command zenity --window-icon="${DATADIR}/assets/logo-square.svg" "$@"
 }
 
 # Happens often enough to warrant a function
@@ -230,7 +234,7 @@ done
 # mode_desktop and mode_filelog both log to a file, but desktop disables
 # terminal output while filelog does not. Logging is output to a new .log file
 # within 'logs/' under the same directory as this script.
-logdir="$(dirname "$0")"/logs
+logdir=${DATADIR}/logs
 logname="${logdir}/polyversal-${exectime}"  # minus the .log so we can add -wine
 if $mode_desktop; then
   mkdir -p "$logdir"
@@ -710,7 +714,7 @@ function check_update() {
   fi
 
   local newer_version
-  newer_version=$(printf "%s\n%s" "$latest_version" "$VERSION" | sort -V | tail -n 1)
+  newer_version=$(printf "%s\n%s" "$latest_version" "$VERSION" | sort -rV | head -n 1)
   if [[ $newer_version == "$VERSION" ]]; then
     log_info "polyversal is up-to-date"
     return 0
