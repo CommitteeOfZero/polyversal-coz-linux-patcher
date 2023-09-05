@@ -81,23 +81,34 @@ txt_purple=''
 txt_blue=''
 function set_logcolors() {
   if ! test -t 2 || [[ ! $(tput colors) -ge 8 ]]; then return 0; fi
+  
   txt_normal="$(tput sgr0)"
-  txt_green="$(tput setaf 2)"
-  txt_yellow="$(tput setaf 3)"
-  txt_red="$(tput setaf 1)"
-  txt_purple="$(tput setaf 5)"
-  txt_blue="$(tput setaf 4)"
+
+  if [[ $(tput colors) -ge 16 ]]; then
+    txt_green=$(tput setaf 2)
+    txt_yellow=$(tput setaf 11)
+    txt_red=$(tput setaf 9)
+    txt_purple=$(tput setaf 13)
+    txt_blue=$(tput setaf 12)
+  else
+    # at least 8 basic colors
+    txt_green="$(tput setaf 2)"
+    txt_yellow="$(tput setaf 3)"
+    txt_red="$(tput setaf 1)"
+    txt_purple="$(tput setaf 5)"
+    txt_blue="$(tput setaf 4)"
+  fi
 }
 
-function log_msg() {
+function _log_msg() {
   local sevpfx
   case $(tolower "$1") in
     'info' | 'i')
-      sevpfx="${txt_green}INFO"  ;;
+      sevpfx="${txt_green} INFO"  ;;
     'warn' | 'w')
-      sevpfx="${txt_yellow}WARN" ;;
+      sevpfx="${txt_yellow} WARN" ;;
     'error' | 'err' | 'e')
-      sevpfx="${txt_red}ERR" ;;
+      sevpfx="${txt_red}ERROR" ;;
     'fatal' | 'fat' | 'f')
       sevpfx="${txt_purple}FATAL"  ;;
     'debug' | 'd')
@@ -106,16 +117,23 @@ function log_msg() {
       # Better than dying for no reason
       sevpfx="$1"  ;;
   esac
+  sevpfx+=${txt_normal}
+  
+  local header
+  header=$progname
+  $mode_debug && header+=:${BASH_LINENO[1]}   # line number where log fn was called
+  
+  local body=${*:2}
 
-  printf '%s: %s: %s\n' "$progname" "$sevpfx" "${*:2}${txt_normal}" >&2
+  printf '%s %s - %s\n' "$header" "$sevpfx" "$body" >&2
 }
-function log_info() { log_msg info "$*"; }
-function log_warn() { log_msg warn "$*"; }
-function log_error() { log_msg err "$*"; }
-function log_fatal() { log_msg fatal "$*"; }
+function log_info() { _log_msg info "$*"; }
+function log_warn() { _log_msg warn "$*"; }
+function log_error() { _log_msg err "$*"; }
+function log_fatal() { _log_msg fatal "$*"; }
 function log_debug() {
   ! $mode_debug && return 0
-  log_msg debug "$*"
+  _log_msg debug "$*"
 }
 
 # Want `./polyversal chn` and `./polyversal CHN` to work the same
