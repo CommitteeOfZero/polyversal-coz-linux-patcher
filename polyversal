@@ -750,6 +750,47 @@ function check_update() {
       --text "A new version of the Polyversal Patcher (v$newer_version) is available! You can download it from <a href=\"$URL_RELEASES\">the releases page</a>."
 }
 
+function nuke_prefix() {
+
+  # usage: nuke_prefix
+
+  local gamedir
+  if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
+    # protontricks outputs to stdout even in the case of an error, so $gamedir actually has the error message.
+    printf '%s\n' "$gamedir" >&2
+    log_error "protontricks error while getting $gamecode game directory"
+    zenity_error "Protontricks encountered an error accessing the game's directory; this likely means you have not yet run the game."
+    return 1
+  fi
+
+  # expect $gamedir to be something like:
+  # /path/to/steamroot/steamapps/common/CHAOS;HEAD NOAH
+  # so the prefix dir would be $gamedir/../../compatdata/1961950.
+  local pfx_relpath=$gamedir/../../compatdata/$appid
+
+  local pfxdir
+  # realpath might not exist, or it might encounter a 'Permission denied', so check for failure
+  if ! pfxdir=$(realpath "$pfx_relpath"); then
+    log_error "error using 'realpath' to get canonical path to compatdata folder"
+    log_warn "attempting to set pfx path manually, this might cause issues ..."
+    pfxdir=$pfx_relpath
+  fi
+  
+  if [[ ! -d $pfxdir ]]; then
+    log_error "prefix directory '$pfxdir' does not exist. this is strange..."
+    zenity_warn "Prefix directory '$pfxdir' does not exist, unable to delete it."
+    return 2
+  elif ! rm -rf "$pfxdir"; then
+    log_error "an error occurred while deleting '$pfxdir'"
+    zenity_error "Something went wrong removing prefix directory '$pfxdir'. Check the logs for more information."
+    return 3
+  fi
+  
+  log_info "$gamename's Proton prefix successfully nuked"
+  zenity --info --title 'Polyversal Success!' \
+      --text "Proton prefix '$pfxdir' for $gamename successfully deleted."
+}
+
 
 ### Argument Processing ###
 
@@ -762,7 +803,8 @@ if $is_gui; then
       --height 400 --width 600            \
       --column 'Select' --column 'Title'  \
       TRUE  'Install a patch'             \
-      FALSE 'Uninstall a patch'           )
+      FALSE 'Uninstall a patch'           \
+      FALSE 'Nuke a Proton prefix'        )
   handle_zenity 'Please select a script action to continue.'
 else
   arg_mode=$1
@@ -795,6 +837,20 @@ case $(tolower "$arg_mode") in
     set_game "$2" "Choose Which Patch to Uninstall"
     log_info "uninstalling CoZ patch for $gamename ..."
     uninstall_patch
+    ;;
+    
+  nuke | nuke-prefix | n | 'nuke a proton prefix')
+    
+    # polyversal nuke <game>
+
+    if ! $is_gui && [[ $# -ne 2 ]]; then
+      log_fatal "Invalid syntax"
+      print_usage
+      exit 1
+    fi
+    set_game "$2" "Choose Which Prefix to Nuke"
+    log_info "nuking $gamename prefix ..."
+    nuke_prefix
     ;;
 
   *)
