@@ -700,13 +700,6 @@ function uninstall_patch() {
     log_error "patch uninstallation exited with nonzero status"
     zenity_error "Patch uninstallation exited with a nonzero status."
   else
-    # Clean up possible leftovers, e.g. FMV project in languagebarrier and
-    # remaining nguninstall.exe. The idea is to get close to 0 external files
-    # remaining in the game dir so that e.g. uninstallation doesn't leave a
-    # dangling folder in steamapps/common.
-    # (even though dxvk logs cause that anyway. /shrug)
-    $ptx_cmd -c 'test -d languagebarrier && rm -rf languagebarrier' $appid
-    $ptx_cmd -c 'test -f nguninstall.exe && rm nguninstall.exe' $appid
     log_info "patch uninstallation complete, no errors signaled."
   fi
   test -t 0 && stty sane
@@ -775,7 +768,7 @@ function nuke_prefix() {
     log_warn "attempting to set pfx path manually, this might cause issues ..."
     pfxdir=$pfx_relpath
   fi
-  
+
   if [[ ! -d $pfxdir ]]; then
     log_error "prefix directory '$pfxdir' does not exist. this is strange..."
     zenity_warn "Prefix directory '$pfxdir' does not exist, unable to delete it."
@@ -785,7 +778,7 @@ function nuke_prefix() {
     zenity_error "Something went wrong removing prefix directory '$pfxdir'. Check the logs for more information."
     return 3
   fi
-  
+
   log_info "$gamename's Proton prefix successfully nuked"
   zenity --info --title 'Polyversal Success!' \
       --text "Proton prefix '$pfxdir' for $gamename successfully deleted."
@@ -838,9 +831,9 @@ case $(tolower "$arg_mode") in
     log_info "uninstalling CoZ patch for $gamename ..."
     uninstall_patch
     ;;
-    
+
   nuke | nuke-prefix | n | 'nuke a proton prefix')
-    
+
     # polyversal nuke <game>
 
     if ! $is_gui && [[ $# -ne 2 ]]; then
