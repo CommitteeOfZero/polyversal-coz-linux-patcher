@@ -34,7 +34,7 @@ readonly URL_API_LATEST
 
 function print_usage() {
   cat << EOF >&2
-usage: polyversal [ -v | --verbose ] [ -h | --help ] [ --desktop ] [ --log ]
+usage: polyversal [ -v | --verbose ] [ -h | --help ] [ --log ]
                   [ -r | --steamroot ] ...
 
 Use a GUI for selecting everything graphically.
@@ -58,11 +58,9 @@ Game abbreviations:
 options:
   -h, --help                Display this help message and exit
   -v, --verbose             Enable debug logging
-  --desktop                 Disable terminal output and redirect stdin/stderr to
-                            a new log file in 'logs'. This is the default when
-                            running from the desktop file
   --log                     Copy terminal output to a new file log in
-                            'logs'. Disables terminal colors
+                            'logs'. Disables terminal colors. This is the
+                            default when running from the desktop file
   -r, --steamroot NEW_ROOT  Use NEW_ROOT as Steam's root directory instead of
                             ~/.local/share/Steam
 
@@ -71,7 +69,7 @@ EOF
 
 # I like colors. Only use them if stderr outputs to a terminal which supports 8
 # or more colors.
-# Pulled into a function that we can call later since --desktop or similar
+# Pulled into a function that we can call later since --log or similar
 # options might change stderr.
 txt_normal=''
 txt_green=''
@@ -215,7 +213,7 @@ function is_ptxvalid() {
 
 ### Option Parsing ###
 
-longopts='help,verbose,desktop,log,steamroot:,i-really-want-to-run-this-as-root-dont-question-me-boy'
+longopts='help,verbose,log,steamroot:,i-really-want-to-run-this-as-root-dont-question-me-boy'
 if ! parsed_args=$(getopt -n "$progname" -o 'hvr:' --long "$longopts" -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
@@ -224,7 +222,6 @@ fi
 eval set -- "$parsed_args"
 
 mode_debug=false
-mode_desktop=false
 mode_filelog=false
 STEAMROOT=$HOME/.local/share/Steam
 allow_root=false
@@ -236,14 +233,8 @@ while true; do
     -h | --help)
       print_usage
       exit 0  ;;
-    # Actual mode will be determined by the last one to be called in the command.
-    --desktop)
-      mode_desktop=true
-      mode_filelog=false
-      shift ;;
     --log)
       mode_filelog=true
-      mode_desktop=false
       shift ;;
     -r | --steamroot)
       STEAMROOT=$2
@@ -266,15 +257,10 @@ if ! $allow_root && [[ $EUID == 0 ]]; then
   exit 1
 fi
 
-# mode_desktop and mode_filelog both log to a file, but desktop disables
-# terminal output while filelog does not. Logging is output to a new .log file
-# within 'logs/' under the same directory as this script.
+# Logging is output to a new .log file within 'logs/' under the same directory
+# as this script.
 logdir=${DATADIR}/logs
 logname="${logdir}/polyversal-${exectime}"  # minus the .log so we can add -wine
-if $mode_desktop; then
-  mkdir -p "$logdir"
-  exec > "${logname}.log" 2>&1
-fi
 if $mode_filelog; then
   # https://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
   mkdir -p "$logdir"
@@ -651,7 +637,7 @@ function install_patch() {
       --text "$(printf 'Running patcher ...\n(This will disappear in 10 seconds)')" &
 
   local ptx_winecmd="$ptx_cmd -c 'cd \"$patch_dir\" && $compat_mts wine $patch_exe' $appid"
-  if $mode_desktop || $mode_filelog; then
+  if $mode_filelog; then
     ptx_winecmd+=" > ${logname}-wine.log 2>&1"
   fi
   log_info "running command: \`$ptx_winecmd\`"
@@ -700,7 +686,7 @@ function uninstall_patch() {
   fi
 
   local ptx_winecmd="$ptx_cmd -c '$compat_mts wine $uninstall_exe' $appid"
-  if $mode_desktop || $mode_filelog; then
+  if $mode_filelog; then
     ptx_winecmd+=" > ${logname}-wine.log 2>&1"
   fi
   log_info "running command: \`$ptx_winecmd\`"
