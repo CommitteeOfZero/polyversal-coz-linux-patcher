@@ -215,7 +215,8 @@ function is_ptxvalid() {
 
 ### Option Parsing ###
 
-if ! parsed_args=$(getopt -n "$progname" -o 'hvr:' --long 'help,verbose,desktop,log,steamroot:' -- "$@"); then
+longopts='help,verbose,desktop,log,steamroot:,i-really-want-to-run-this-as-root-dont-question-me-boy'
+if ! parsed_args=$(getopt -n "$progname" -o 'hvr:' --long "$longopts" -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
   exit 1
@@ -226,6 +227,7 @@ mode_debug=false
 mode_desktop=false
 mode_filelog=false
 STEAMROOT=$HOME/.local/share/Steam
+allow_root=false
 while true; do
   case "$1" in
     -v | --verbose)
@@ -246,6 +248,9 @@ while true; do
     -r | --steamroot)
       STEAMROOT=$2
       shift 2 ;;
+    --i-really-want-to-run-this-as-root-dont-question-me-boy)
+      allow_root=true
+      shift ;;
     --)
       shift
       break ;;
@@ -255,6 +260,11 @@ while true; do
       exit 1  ;;
   esac
 done
+
+if ! $allow_root && [[ $EUID == 0 ]]; then
+  printf '%s\n' "YOU ARE RUNNING THIS SCRIPT AS ROOT! This is VERY PROBABLY NOT what you want to do. Please run it without \`sudo'."
+  exit 1
+fi
 
 # mode_desktop and mode_filelog both log to a file, but desktop disables
 # terminal output while filelog does not. Logging is output to a new .log file
