@@ -48,6 +48,7 @@ Game abbreviations:
   cc
   sg0
   rnd
+  ac
 
 options:
   -h, --help                Display this help message and exit
@@ -360,7 +361,8 @@ function set_game() {
         FALSE 'ROBOTICS;NOTES ELITE'        \
         FALSE 'CHAOS;CHILD'                 \
         FALSE 'STEINS;GATE 0'               \
-        FALSE 'ROBOTICS;NOTES DaSH')
+        FALSE 'ROBOTICS;NOTES DaSH'               \
+        FALSE 'ANONYMOUS;CODE')
     handle_zenity "You must select which game to patch for the script to work."
   else
     arg_game=$1
@@ -405,6 +407,12 @@ function set_game() {
       patch_exe='RNDPatch-Installer.exe'
       gamename="ROBOTICS;NOTES DaSH"
       gamecode=rnd
+      ;;
+    'ac' | 'anonymous'[\;\ ]'code')
+      appid=2291020
+      patch_exe='ACSteamPatch-Installer.exe'
+      gamename="ANONYMOUS;CODE"
+      gamecode=ac
       ;;
     *)
       log_fatal "shortname '$arg_game' is invalid"
