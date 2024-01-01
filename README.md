@@ -156,6 +156,7 @@ Here you can find a table of all the SciADV games which have received patches an
 | CHAOS;CHILD           |       cc       | 970570     |
 | STEINS;GATE 0         |      sg0       | 825630     |
 | ROBOTICS;NOTES DaSH   |      rnd       | 1111390    |
+| ANONYMOUS;CODE        |      ac        | 2291020    |
 
 Some variations like 'dash' are supported. Consult the script itself for a full list.
 
