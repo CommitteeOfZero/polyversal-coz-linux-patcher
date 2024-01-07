@@ -332,6 +332,7 @@ appid=
 patch_exe=
 gamename=
 gamecode=
+gamedir=
 function set_game() {
 
   # usage: set_game <shortname?> <zenity msg>
@@ -414,6 +415,14 @@ function set_game() {
       exit 1
       ;;
   esac
+
+  if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
+    # protontricks outputs to stdout even in the case of an error, so $gamedir actually has the error message.
+    printf '%s\n' "$gamedir" >&2
+    log_fatal "protontricks error while getting $gamecode game directory. likely is not installed or has not been run to generate prefix."
+    zenity_error "Unable to locate $gamename's game directory. This likely means you have not yet run and quit the game once to generate its Proton prefix."
+    exit 99
+  fi
 }
 
 # CHN CoZ patch includes custom SteamGrid images, but since the patch is built for
@@ -461,13 +470,6 @@ function apply_launcherfix() {
 
   # usage: apply_launcherfix
 
-  local gamedir
-  if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
-    log_error "protontricks error while getting $gamecode game directory"
-    zenity_error "Protontricks encountered an error before the launcher issue for $gamename could be fixed. Check the logs for more information."
-    return 1
-  fi
-
   log_info "fixing $gamecode launcher issue ..."
   if ! pushd "$gamedir"; then
     log_error "unable to cd into game directory '$gamedir'"
@@ -505,9 +507,7 @@ function apply_launcherfix() {
 # Undo the launcher fix for uninstallation
 function undo_launcherfix() {
 
-  # usage: undo_launcherfix <game dir>
-
-  local gamedir=$1
+  # usage: undo_launcherfix
 
   log_info "undoing $gamecode launcher fix ..."
   if ! pushd "$gamedir"; then
@@ -663,13 +663,6 @@ function uninstall_patch() {
       --text "$(printf 'Running patch uninstaller ...\n(This will disappear in 10 seconds)')" &
 
   # make sure the uninstaller actually exists
-  local gamedir
-  if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
-    log_error "protontricks error while getting $gamename game directory"
-    zenity_error "Protontricks encountered an error while accessing the $gamename's Steam directory. Unable to uninstall patch."
-    exit 1
-  fi
-
   local uninstall_exe='nguninstall.exe'
   if [[ ! -f $gamedir/$uninstall_exe ]]; then
     log_error "$uninstall_exe not present in game directory '$gamedir', can't run anything"
@@ -683,7 +676,7 @@ function uninstall_patch() {
   fi
   log_info "running command: \`$ptx_winecmd\`"
 
-  [[ $gamecode == sg || $gamecode == cc ]] && undo_launcherfix "$gamedir"
+  [[ $gamecode == sg || $gamecode == cc ]] && undo_launcherfix
   if ! eval "$ptx_winecmd"; then
     log_error "patch uninstallation exited with nonzero status"
     zenity_error "Patch uninstallation exited with a nonzero status."
@@ -734,15 +727,6 @@ function check_update() {
 function nuke_prefix() {
 
   # usage: nuke_prefix
-
-  local gamedir
-  if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
-    # protontricks outputs to stdout even in the case of an error, so $gamedir actually has the error message.
-    printf '%s\n' "$gamedir" >&2
-    log_error "protontricks error while getting $gamecode game directory"
-    zenity_error "Protontricks encountered an error accessing the game's directory; this likely means you have not yet run the game."
-    return 1
-  fi
 
   # expect $gamedir to be something like:
   # /path/to/steamroot/steamapps/common/CHAOS;HEAD NOAH
