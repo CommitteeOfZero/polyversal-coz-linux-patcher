@@ -21,7 +21,7 @@ exectime=$(date +%Y%m%dT%H%M%S)
 readonly exectime
 
 VERSION=2.0.0
-REPO_ID="CommitteeOfZero/multiversal-coz-linux-patcher"
+REPO_ID="CommitteeOfZero/polyversal-coz-linux-patcher"
 URL_RELEASES="https://github.com/${REPO_ID}/releases"
 URL_API_LATEST="https://api.github.com/repos/${REPO_ID}/releases/latest"
 readonly VERSION
@@ -150,7 +150,7 @@ function is_cmd() {
 # Shadows any call to zenity so we don't accidentally forget an $is_gui
 function zenity() {
   ! $is_gui && return 0
-  command zenity --window-icon="${DATADIR}/assets/logo-square.svg" "$@"
+  command zenity --icon="${DATADIR}/assets/logo-square.svg" "$@"
 }
 
 # Happens often enough to warrant a function
@@ -160,30 +160,6 @@ function zenity_error() {
 
 function zenity_warn() {
   zenity --warning --title "Polyversal Warning" --text "$*"
-}
-
-# Handle non-zero exit statuses from Zenity.
-# **Must be called immediately after zenity command.**
-# Single optional argument is the message to be displayed in the case that the
-# user closes the window.
-function handle_zenity() {
-  local zen_ret=$?
-  local closedmsg="$*"
-  [[ ! $closedmsg ]] && closedmsg="You must select an option."
-  case $zen_ret in
-    1)
-      log_fatal "Zenity window was closed while prompting for selection."
-      zenity_error "$closedmsg"
-      exit 1 ;;
-    5)
-      log_fatal "Zenity dialogue timed out while prompting for selection."
-      zenity_error "The input dialogue timed out."
-      exit 1 ;;
-    -1)
-      log_fatal "Zenity returned an unexpected error"
-      zenity_error "An unexpected error occurred using Zenity."
-      exit 1 ;;
-  esac
 }
 
 # Determines if Protontricks is up to date, i.e. $ptx_minversion or later.
@@ -348,21 +324,6 @@ else
   ptx_cmd="flatpak run $ptx_flatpak"
 fi
 
-# Flatpak Protontricks has to be given access to the game's Steam folder to
-# make changes. On Deck this is (hopefully) as easy as giving it access to all
-# of its mounts and partitions; on PC, this could involve some tricky parsing
-# of VDF files to give it access to different library folders.
-# TODO: parse VDF files to give it access to different library folders. For
-# now, FP Protontricks gives the user a prompt telling it which folder to give
-# access to anyway, so it's not too big of an issue as long as the user can
-# (a) read, and (b) copy and paste a single command.
-compat_mts=
-if $is_deck; then
-  flatpak override --user --filesystem=/run/media/ "$ptx_flatpak"
-  compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
-fi
-$is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
-
 
 ### Functionality Functions ###
 
@@ -388,7 +349,15 @@ function set_game() {
         FALSE 'STEINS;GATE 0'               \
         FALSE 'ROBOTICS;NOTES DaSH'               \
         FALSE 'ANONYMOUS;CODE')
-    handle_zenity "You must select which game to patch for the script to work."
+    local zen_ret=$?
+    log_debug "zen_ret for set_game = $zen_ret"
+    case $zen_ret in
+      1) start_screen ;;
+      -1)
+        log_fatal "An unexpeted Zenity error has occured in set_game()."
+        exit 42
+        ;;
+    esac
   else
     arg_game=$1
   fi
@@ -583,7 +552,15 @@ function install_patch() {
   if $is_gui; then
     arg_patchdir=$(zenity --file-selection --title "Choose $gamename CoZ Patch Directory" \
         --directory --filename "$HOME/Downloads")
-    handle_zenity "You must select the directory containing the patch for the script to work."
+    local zen_ret=$?
+    log_debug "zen_ret in install_patch = $zen_ret"
+    case $zen_ret in
+      1) start_screen ;;
+      -1)
+        log_fatal "An unexpected Zenity error has occurred in install_patch()."
+        exit 42
+        ;;
+    esac
   else
     arg_patchdir=$1
   fi
@@ -635,6 +612,21 @@ function install_patch() {
   log_info "patching $gamename ..."
   zenity --timeout 10 --info --title 'Info' \
       --text "$(printf 'Running patcher ...\n(This will disappear in 10 seconds)')" &
+
+  # Flatpak Protontricks has to be given access to the game's Steam folder to
+  # make changes. On Deck this is (hopefully) as easy as giving it access to all
+  # of its mounts and partitions; on PC, this could involve some tricky parsing
+  # of VDF files to give it access to different library folders.
+  # TODO: parse VDF files to give it access to different library folders. For
+  # now, FP Protontricks gives the user a prompt telling it which folder to give
+  # access to anyway, so it's not too big of an issue as long as the user can
+  # (a) read, and (b) copy and paste a single command.
+  compat_mts=
+  if $is_deck; then
+    flatpak override --user --filesystem=/run/media/ "$ptx_flatpak"
+    compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
+  fi
+  $is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 
   local ptx_winecmd="$ptx_cmd -c 'cd \"$patch_dir\" && $compat_mts wine $patch_exe' $appid"
   if $mode_filelog; then
@@ -780,72 +772,88 @@ function nuke_prefix() {
       --text "Proton prefix '$pfxdir' for $gamename successfully deleted."
 }
 
+function start_screen() {
+  
+  # usage: start_screen $@
 
-### Argument Processing ###
+  # Get the script mode, i.e. install or uninstall
+  arg_mode=
+  if $is_gui; then
+    arg_mode=$(zenity --list --radiolist --title 'What would you like to do?'  \
+        --height 400 --width 600            \
+        --column 'Select' --column 'Title'  \
+        TRUE  'Install a patch'             \
+        FALSE 'Uninstall a patch'           \
+        FALSE 'Nuke a Proton prefix'        )
+    local zen_ret=$?
+    log_debug "zen_ret for start_screen = $zen_ret"
+    case $zen_ret in
+      1)
+        log_info "start screen canceled"
+        exit 1
+        ;;
+      -1)
+        log_fatal "An unexpected Zenity error has occurred in start_screen()."
+        exit 42
+        ;;
+    esac
+  else
+    arg_mode=$1
+  fi
 
+  case $(tolower "$arg_mode") in
+    install | inst | i | 'install a patch')
+
+      # polyversal install <game> <patch dir>
+
+      if ! $is_gui && [[ $# -ne 3 ]]; then
+        log_fatal "Invalid syntax"
+        print_usage
+        exit 1
+      fi
+      set_game "$2" "Choose Which Game to Patch"
+      log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
+      install_patch "$3"
+      ;;
+
+    uninstall | uninst | u | 'uninstall a patch')
+
+      # polyversal uninstall <game>
+
+      if ! $is_gui && [[ $# -ne 2 ]]; then
+        log_fatal "Invalid syntax"
+        print_usage
+        exit 1
+      fi
+      set_game "$2" "Choose Which Patch to Uninstall"
+      log_info "uninstalling CoZ patch for $gamename ..."
+      uninstall_patch
+      ;;
+
+    nuke | nuke-prefix | n | 'nuke a proton prefix')
+
+      # polyversal nuke <game>
+
+      if ! $is_gui && [[ $# -ne 2 ]]; then
+        log_fatal "Invalid syntax"
+        print_usage
+        exit 1
+      fi
+      set_game "$2" "Choose Which Prefix to Nuke"
+      log_info "nuking $gamename prefix ..."
+      nuke_prefix
+      ;;
+
+    *)
+      # gui selection will never be wrong, ideally lol
+      log_fatal "invalid script verb '$arg_mode'"
+      print_usage
+      exit 1
+      ;;
+  esac
+}
+
+
+# Actually start the script
 check_update &
-
-# Get the script mode, i.e. install or uninstall
-arg_mode=
-if $is_gui; then
-  arg_mode=$(zenity --list --radiolist --title 'What would you like to do?'  \
-      --height 400 --width 600            \
-      --column 'Select' --column 'Title'  \
-      TRUE  'Install a patch'             \
-      FALSE 'Uninstall a patch'           \
-      FALSE 'Nuke a Proton prefix'        )
-  handle_zenity 'Please select a script action to continue.'
-else
-  arg_mode=$1
-fi
-
-case $(tolower "$arg_mode") in
-  install | inst | i | 'install a patch')
-
-    # polyversal install <game> <patch dir>
-
-    if ! $is_gui && [[ $# -ne 3 ]]; then
-      log_fatal "Invalid syntax"
-      print_usage
-      exit 1
-    fi
-    set_game "$2" "Choose Which Game to Patch"
-    log_info "patching $gamename using app ID $appid, expecting patch EXE name '$patch_exe' ..."
-    install_patch "$3"
-    ;;
-
-  uninstall | uninst | u | 'uninstall a patch')
-
-    # polyversal uninstall <game>
-
-    if ! $is_gui && [[ $# -ne 2 ]]; then
-      log_fatal "Invalid syntax"
-      print_usage
-      exit 1
-    fi
-    set_game "$2" "Choose Which Patch to Uninstall"
-    log_info "uninstalling CoZ patch for $gamename ..."
-    uninstall_patch
-    ;;
-
-  nuke | nuke-prefix | n | 'nuke a proton prefix')
-
-    # polyversal nuke <game>
-
-    if ! $is_gui && [[ $# -ne 2 ]]; then
-      log_fatal "Invalid syntax"
-      print_usage
-      exit 1
-    fi
-    set_game "$2" "Choose Which Prefix to Nuke"
-    log_info "nuking $gamename prefix ..."
-    nuke_prefix
-    ;;
-
-  *)
-    # gui selection will never be wrong, ideally lol
-    log_fatal "invalid script verb '$arg_mode'"
-    print_usage
-    exit 1
-    ;;
-esac
+start_screen "$@"
