@@ -10,24 +10,25 @@ readonly DATADIR
 
 # Protontricks 1.10.1 or later is needed because anything earlier gives a
 # cryptic message about magic numbers.
-ptx_flatpak='com.github.Matoking.protontricks'
-ptx_minversion='1.10.1'
-readonly ptx_flatpak
-readonly ptx_minversion
+readonly ptx_flatpak='com.github.Matoking.protontricks'
+readonly ptx_minversion='1.10.1'
 
 # For log files and the like, all hail ISO 8601.
 # People likely won't be running this more than once in a second.
-exectime=$(date +%Y%m%dT%H%M%S)
+function iso_date() { date +%Y%m%dT%H%M%S; }
+exectime=$(iso_date)
 readonly exectime
 
-VERSION=2.0.0
-REPO_ID="CommitteeOfZero/polyversal-coz-linux-patcher"
-URL_RELEASES="https://github.com/${REPO_ID}/releases"
-URL_API_LATEST="https://api.github.com/repos/${REPO_ID}/releases/latest"
-readonly VERSION
-readonly REPO_ID
-readonly URL_RELEASES
-readonly URL_API_LATEST
+# For checking whether the script is out-of-date
+readonly VERSION=2.0.0
+readonly REPO_ID="CommitteeOfZero/polyversal-coz-linux-patcher"
+readonly URL_RELEASES="https://github.com/${REPO_ID}/releases"
+readonly URL_API_LATEST="https://api.github.com/repos/${REPO_ID}/releases/latest"
+
+# Custom Proton download
+readonly AC_PROTON_URL='https://hawkhe.art/protonge-anonymouscode.tar.gz'
+readonly AC_PROTON_MD5='1ab4a7d9d0351e0242436caf2964b73a'
+readonly AC_PROTON_DIRNAME='protonge-anonymouscode'
 
 
 ### Functions ###
@@ -79,7 +80,7 @@ txt_purple=''
 txt_blue=''
 function set_logcolors() {
   if ! test -t 2 || [[ ! $(tput colors) -ge 8 ]]; then return 0; fi
-  
+
   txt_normal="$(tput sgr0)"
 
   if [[ $(tput colors) -ge 16 ]]; then
@@ -116,11 +117,11 @@ function _log_msg() {
       sevpfx="$1"  ;;
   esac
   sevpfx+=${txt_normal}
-  
+
   local header
   header=$progname
   $mode_debug && header+=:${BASH_LINENO[1]}   # line number where log fn was called
-  
+
   local body=${*:2}
 
   printf '%s %s - %s\n' "$header" "$sevpfx" "$body" >&2
@@ -199,7 +200,7 @@ eval set -- "$parsed_args"
 
 mode_debug=false
 mode_filelog=false
-STEAMROOT=$HOME/.local/share/Steam
+STEAMROOT=$HOME/.steam/root
 allow_root=false
 while true; do
   case "$1" in
@@ -476,7 +477,7 @@ function apply_launcherfix() {
     zenity_error "An error occurred while accessing the game directory '$gamedir', unable to apply launcher fix. See the logs for more info."
     return 2
   fi
-  
+
   local defaultlauncher
   case $gamecode in
     sg) defaultlauncher=Launcher.exe  ;;
@@ -486,7 +487,7 @@ function apply_launcherfix() {
       popd
       return 3  ;;
   esac
-  
+
   if [[ ! ( -f $defaultlauncher && -f LauncherC0.exe ) ]]; then
     log_error "the default launcher and CoZ launcher were not both present in gamedir '$gamedir', unable to proceed with fix"
     ls -l "$defaultlauncher" LauncherC0.exe >&2
@@ -655,7 +656,7 @@ function install_patch() {
 function uninstall_patch() {
 
   # usage: uninstall_patch
-  
+
   zenity --timeout 2 --info --title ':(' --text ':(' &
 
   log_info "uninstalling $gamename patch ..."
@@ -756,8 +757,178 @@ function nuke_prefix() {
       --text "Proton prefix '$pfxdir' for $gamename successfully deleted."
 }
 
+# these are NOT local, since it has to be rm'd by a trap
+curl_fifo=
+proton_tar_name=
+dl_proc=
+function download_ac_proton() {
+
+  # usage: download_ac_proton
+
+  proton_tar_name="$DATADIR/acge-dl-TEMP-$(iso_date).tar.gz"
+  trap 'cleanup_proton_install' EXIT SIGHUP SIGINT SIGQUIT SIGTERM  # note: I don't know what I'm doing. these just seem like the right signals to trap
+
+  # CLI is so much easier jfc
+  if ! $is_gui; then
+    if ! curl -o "$proton_tar_name" "$AC_PROTON_URL"; then
+      log_error "cURL error occurred while downloading custom proton"
+      exit 1
+    fi
+    log_info "downloaded custom proton build to $proton_tar_name"
+    return 0
+  fi
+
+  curl_fifo="$DATADIR/curl-fifo-$(iso_date)"
+  if ! mkfifo "$curl_fifo"; then
+    log_fatal "error occurred creating named pipe for cURL call"
+    zenity_error "An unexpected error occurred creating a named pipe while downloading the custom Proton build. Check the logs for details."
+    exit 1
+  fi
+
+  curl -o "$proton_tar_name" "$AC_PROTON_URL" > "$curl_fifo" 2>&1 &
+  dl_proc=$!
+
+  (
+    echo '# Downloading custom Proton tarball...'
+    # https://www.unix.com/shell-programming-and-scripting/280143-function-run-progress-bar-zenity.html, post #3
+    # the `system("")` call apparently flushes the buffer after each awk so that the progress bar can actually move as curl outputs more lines
+    <"$curl_fifo" awk -v RS="\r" '$1 ~ /[0-9]/ { print $1 ; system("") }'
+    echo "# Download finished! Click 'OK' to begin installation."
+  ) | zenity --progress --cancel-label "Cancel download" --percentage 0 --title "Custom Proton Download" --width 400
+  local zen_ret="${PIPESTATUS[1]}"
+  log_debug "zenity return for the cURL monster = $zen_ret"
+
+  # I suppose theoretically we *should* care if something went horribly wrong with Zenity, but if the download completed
+  # then we'll just be pragmatic and not.
+  case $zen_ret in
+    -1)
+      kill $dl_proc
+      log_fatal "unexpected Zenity error occurred. proton download canceled as it's unclear if it succeeded"
+      # seems kinda weird to spit out a Zenity error using Zenity but idk
+      zenity_error "An unexpected error occurred in Zenity, and the Proton download could not be completed. Check the logs for more info."
+      exit 1
+      ;;
+    1)
+      kill $dl_proc
+      log_info "stopped proton download due to pressing 'cancel' button"
+      zenity --info --title 'Proton Download Canceled'  \
+          --text 'Custom A;C Proton-GE download has been canceled.'
+      exit 1
+      ;;
+  esac
+
+  wait $dl_proc
+  local curl_ret=$?
+  dl_proc=    # so that it doesn't get cleaned up by the trap function
+
+  if [[ $curl_ret != 0 ]]; then
+    log_error "cURL returned an error while downloading proton, exit status $curl_ret"
+    zenity_error "An error occured while downloading the custom Proton build. Check the logs for more info."
+    exit 1
+  fi
+  log_info "custom proton tarball successfully downloaded to $proton_tar_name. probably."
+}
+
+function install_ac_proton() {
+
+  # usage: install_ac_proton
+
+  local compatdir=$STEAMROOT/compatibilitytools.d
+  log_debug "compatibilitytools directory = '$compatdir'"
+  if [[ ! -d $compatdir ]]; then
+    log_warn "compatibilitytools.d doesn't exist... something might be going very wrong"
+    # if $STEAMROOT doesn't exist then we'll just let `tar` handle the failure
+    [[ -d $STEAMROOT ]] && mkdir -p "$STEAMROOT/compatibilitytools.d"
+  fi
+
+  # try and protect them from re-downloading and extracting it
+  local protondir=$compatdir/$AC_PROTON_DIRNAME
+  local prev_installed=false
+  if [[ -d $protondir ]]; then
+    log_warn "'$compatdir' already contains directory '$AC_PROTON_DIRNAME'"
+    local answer=
+    if $is_gui; then
+      if zenity --question --title 'Existing Custom Proton Detected' \
+          --text "It looks like you already have the custom A;C Proton-GE build installed in your Steam's compatibility tools. Do you want to download and re-install it anyway?"
+      then
+        answer='y'
+        log_info "selected re-installation via GUI"
+      else
+        log_info "selected not to re-install via GUI"
+        start_screen
+      fi
+    else
+      while [[ $(tolower "$answer") != 'y' && $(tolower "$answer") != 'n' ]]; do
+        read -rp "It looks like the custom Proton-GE build '$AC_PROTON_DIRNAME' already exists in your installed compatibility tools.
+Download and install it anyway? (y/n): " answer
+      done
+      log_info "got answer '$answer' from CLI input"
+    fi
+
+    [[ $answer != 'y' ]] && exit 0
+    prev_installed=true
+  fi
+
+  download_ac_proton
+
+  local tar_opts='-xzf'
+  local tar_tail=
+  if $mode_filelog; then
+    tar_opts='-xvzf'
+    tar_tail='> "${logname}-untar.log" 2>&1'
+  fi
+
+  local tar_cmd="tar $tar_opts \"$proton_tar_name\" -C \"$DATADIR\" $tar_tail"
+  log_debug "running untar command: \`$tar_cmd\`"
+
+  eval "$tar_cmd" &
+  local tar_proc=$!
+
+  log_info "extracting A;C proton build $proton_tar_name to $protondir ..."
+  zenity --info --timeout 20 --title "Polyversal Extraction"   \
+      --text "Extracting A;C Proton build ...\n(This might take a short while. A new window will appear upon completion.)" &
+  local zen_proc=$!
+
+  wait $tar_proc
+  local tar_ret=$?
+
+  kill $zen_proc  # this doesn't kill the "extracting..." window and I don't know why. leaving it in the hopes that it's just on my machine
+  local has_gone_wrong=false
+  if [[ $tar_ret == 0 ]]; then
+    log_info "extraction successful. moving to $protondir"
+    $prev_installed && rm -rf "$protondir"
+    ! mv "$DATADIR/$AC_PROTON_DIRNAME" "$compatdir" && has_gone_wrong=true
+  else
+    log_error "an error occurred while extracting the tarball"
+    has_gone_wrong=true
+  fi
+
+  if $has_gone_wrong; then
+    zenity_error "An error occurred while installing the custom Proton build to your Steam's compatibility tools. Check the logs for more details."
+    exit 1
+  fi
+
+  zenity --info --title 'Polyversal Success!'   \
+      --text "Custom A;C Proton-GE build has successfully been installed! <b>Remember to restart Steam so that you can use it.</b>"
+}
+
+# clean up temp files/pipes from downloading
+function cleanup_proton_install() {
+  local ret=$?
+
+  # curl download cleanup
+  [[ -p $curl_fifo ]] && rm "$curl_fifo"
+  [[ -f $proton_tar_name ]] && rm "$proton_tar_name"
+  [[ -n $dl_proc ]] && kill "$dl_proc"
+
+  # tar extraction cleanup
+  [[ -d $DATADIR/$AC_PROTON_DIRNAME ]] && rm -rf "${DATADIR:?}/$AC_PROTON_DIRNAME"
+
+  exit $ret
+}
+
 function start_screen() {
-  
+
   # usage: start_screen $@
 
   # Get the script mode, i.e. install or uninstall
@@ -768,7 +939,8 @@ function start_screen() {
         --column 'Select' --column 'Title'  \
         TRUE  'Install a patch'             \
         FALSE 'Uninstall a patch'           \
-        FALSE 'Nuke a Proton prefix'        )
+        FALSE 'Nuke a Proton prefix'        \
+        FALSE 'Install custom A;C Proton'   )
     local zen_ret=$?
     log_debug "zen_ret for start_screen = $zen_ret"
     case $zen_ret in
@@ -826,6 +998,14 @@ function start_screen() {
       set_game "$2" "Choose Which Prefix to Nuke"
       log_info "nuking $gamename prefix ..."
       nuke_prefix
+      ;;
+
+    ac-proton | ge | 'install custom a;c proton')
+
+      # polyversal ac-proton
+
+      log_info "downloading and installing custom A;C proton ..."
+      install_ac_proton
       ;;
 
     *)
