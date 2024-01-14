@@ -12,7 +12,7 @@ The Polyversal Patcher makes it easy to install this Proton version:
 
 1. Choose "Install custom A;C Proton" (the GIF above is outdated) and follow the prompts.
 
-   ![Starting the custom install process](/assets/gif/ac-proton.gif)
+   ![Selecting the A;C Proton installation](/assets/gif/ac-proton.gif "Starting the custom Proton install process")
 
    - **Note**: this file is a bit large and may take a while to download, depending on your internet speed.
 

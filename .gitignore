@@ -1,0 +1,7 @@
+# No individual logs
+/logs/
+
+# In case the `trap`s in the script don't work
+acge-dl-TEMP-*
+curl-fifo-*
+protonge-anonymouscode
