@@ -316,15 +316,12 @@ else
     log_info "flatpak protontricks installed successfully"
   fi
 
-  # Has to have version >= $ptx_minversion
-  if ! is_ptxvalid fp; then
-    log_warn "flatpak protontricks out-of-date: $(flatpak run $ptx_flatpak --version) < $ptx_minversion. attempting to update ..."
-    if ! flatpak update -y "$ptx_flatpak"; then
-      log_fatal "error occurred while updating flatpak protontricks"
-      zenity_error "An error occurred while updating Flatpak Protontricks."
-      exit 1
-    fi
-    log_info "flatpak protontricks updated successfully"
+  # Just update no matter what, outdated versions beyond the minimum have alrady caused issues
+  if ! flatpak update -y "$ptx_flatpak"; then
+    log_warn "error occurred while updating flatpak protontricks"
+    zenity_warn "An error occurred while updating Flatpak Protontricks. The script will continue, although this may or may not cause issues."
+  else
+    log_info "flatpak protontricks either updated successfully or was already up-to-date"
   fi
 
   is_flatpak=true
