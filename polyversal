@@ -41,11 +41,17 @@ usage: polyversal [ -v | --verbose ] [ -h | --help ] [ --log ]
 Use a GUI for selecting everything graphically.
 $ $progname
 
-Patch game with abbreviation GAME_ABBREV and CoZ patch in PATCH_FOLDER.
+Patch GAME with the CoZ patch in PATCH_FOLDER.
 $ $progname install GAME_ABBREV PATCH_FOLDER
 
-Uninstall patch for game with abbreviation GAME_ABBREV.
-$ $progname uninstall GAME_ABBREV
+Uninstall CoZ patch for GAME.
+$ $progname uninstall GAME
+
+Delete GAME's Proton prefix.
+$ $progname nuke GAME
+
+Install custom Proton-GE build for A;C video playback.
+$ $progname ac-proton
 
 Game abbreviations:
   chn

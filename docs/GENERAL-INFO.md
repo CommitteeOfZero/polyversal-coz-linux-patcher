@@ -2,7 +2,7 @@
 
 This is a more detailed page on what the PLSPftCoZSASPoL does and exactly how to get it working on Linux systems in general, not just the Steam Deck. It is written with the assumption that the reader has a general understanding of how to work with Linux and the command line.
 
-The foundations of this script are largely built upon [/u/PartTimeBento's seminal Reddit post](https://www.reddit.com/r/SteamDeck/comments/uitpca/patching_steinsgate_and_steinsgate0_on_the).
+The foundations of this script are largely built upon [u/PartTimeBento's seminal Reddit post](https://www.reddit.com/r/SteamDeck/comments/uitpca/patching_steinsgate_and_steinsgate0_on_the).
 
 ## TL;DR
 
@@ -16,6 +16,7 @@ Double-click the included `.desktop` entry ([if it works](/docs/TROUBLESHOOTING.
 ./polyversal install <game name> <patch dir>  # install patch
 ./polyversal uninstall <game name>            # remove installed patch
 ./polyversal nuke <game name>                 # delete a game's Proton prefix
+./polyversal ac-proton                        # install custom A;C Proton build
 ```
 
 - `<game name>` is the game's [shortname identifier](/docs/GAMES.md)
@@ -86,28 +87,27 @@ You'll know the script has started successfully when you see a window similar to
 
 ### CLI
 
-To run the script in CLI mode, invoke it in one of the forms below, replacing `<game name>` with a shortname identifier from [this table](/docs/GAMES.md) and `<patch dir>` with the path to the extracted folder containing the CoZ patch.
+To run the script in CLI mode, invoke it in one of the forms below, replacing `GAME` with a shortname identifier from [this table](/docs/GAMES.md) and `PATCH_DIR` with the path to the extracted folder containing the CoZ patch.
 
 It must not be run as root, else it will fail with an error message.
 
 ```sh
 # Install a patch
-$ ./polyversal install <game name> <patch dir>
+$ ./polyversal install GAME PATCH_DIR
 
 # Uninstall a patch
-$ ./polyversal uninstall <game name>
+$ ./polyversal uninstall GAME
 
 # Delete a game's existing Proton prefix
-$ ./polyversal nuke <game name>
+$ ./polyversal nuke GAME
+
+# Install custom Proton-GE build for A;C video
+$ ./polyversal ac-proton
 
 # Examples:
 $ ./polyversal install chn ~/Downloads/CHNSteamPatch-v1.0.2-Setup
-
-$ bash polyversal inst sg0 /home/myname/Games/SG0/SG0Patch-v2.1.3-Setup
-
+$ bash polyversal i sg0 /home/myname/Games/SG0/SG0Patch-v2.1.3-Setup
 $ ./polyversal uninstall dash
-
-$ ./polyversal nuke rne
 ```
 
 [See here](#command-line-options) for CLI options.
@@ -122,8 +122,7 @@ The following info is pertinent regardless of how you launched the script.
 
   - If asked for an installation directory by the installer, use `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game. For example, Chaos;Head NoAH on the Steam Deck would be `Z:/home/deck/.local/share/Steam/steamapps/common/CHAOS;HEAD NOAH`.
 
-- Reaching the 'Success!' message at the end of the script does not necessarily mean the patch was applied successfully. Due to the nature of the Wine layer, it can unfortunately be difficult to automatically determine a program's success. Be sure to verify that the patch is actually active upon booting up the game.
-  <!-- TODO: Specifics go here, link to Chris' tweet about the noids and mention the mouse and whatnot -->
+- Reaching the 'Success!' message at the end of the script does not necessarily mean the patch was applied successfully. Due to the nature of the Wine layer, it can unfortunately be difficult to automatically determine a program's success. Be sure to [verify that the patch is actually active](/docs/VERIFY.md) upon booting up the game.
 
 ## Command Line Options
 
