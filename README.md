@@ -2,7 +2,7 @@
 
 This Bash script is intended to automate the process of installing CoZ Steam patches on GNU/Linux systems including the Steam Deck and desktop distros.
 
-**The instructions below are written specifically for the Steam Deck** as this has proven to be the most common use case. They should be largely adaptable to any desktop Linux installation, but for more general instructions, system requirements, and other information about the script, see [GENERAL-INFO.md](/docs/GENERAL-INFO.md).
+**The instructions below are written specifically for the Steam Deck** as this has proven to be the most common use case. They should be largely adaptable to any desktop Linux installation, but for more general instructions, system requirements, and other information about the script including the CLI mode, see [GENERAL-INFO.md](/docs/GENERAL-INFO.md).
 
 ## Setup
 
@@ -12,16 +12,15 @@ This Bash script is intended to automate the process of installing CoZ Steam pat
 
 1. Extract both of these files.
 
-   ![A gif of extracting the script](/assets/gif/unzip-poly.gif "Unzipping the script")
-
-   ![A gif of extracting the CoZ patch](/assets/gif/unzip-patch.gif "Unzipping the CoZ patch")
+   ![A gif of extracting the script and CoZ patch](/assets/gif/unzip.gif "Unzipping the archives")
 
    - **Note**: opening and extracting the CoZ patch might take some time. This GIF has been edited for brevity.
 
-   <!-- TODO eventually(?): make an AC.md docs page with instructions for the maybe eventual mode for installing proton -->
-1. **If you're patching Anonymous;Code,** [read here](https://sonome.dareno.me/projects/coz-linux-deck.html) for an extra required step.
+1. **If you're patching Anonymous;Code,** [read here](/docs/AC.md) for some brief (but required) additional setup. Then return here and continue onto the next step.
 
 1. Download and install your target game from Steam, and within the game's Properties menu under Compatibility select its [required Proton version](/docs/GAMES.md).
+
+   ![A gif of choosing Proton versions from a game's Properties menu](/assets/gif/props-proton.gif "Choosing a Proton version from R;NE's properties")
 
 1. Run the game at least once. Reaching the launcher and then pressing `Quit Game` is sufficient for this.
 
@@ -39,14 +38,20 @@ This Bash script is intended to automate the process of installing CoZ Steam pat
 
 1. Follow the instructions in the CoZ patch installer.
 
-   - If the installation directory isn't automatically populated, put `Z:/home/<USERNAME>/.steam/root/steamapps/common/<GAME>`. For example, Chaos;Head NoAH would be `Z:/home/deck/.steam/root/steamapps/common/CHAOS;HEAD NOAH`.
+   - If the installation directory isn't automatically populated, put `Z:/home/<USERNAME>/.steam/root/steamapps/common/<GAME>` if the game is installed on your internal drive. For example, Chaos;Head NoAH would be `Z:/home/deck/.steam/root/steamapps/common/CHAOS;HEAD NOAH`.
 
-   - If you have your Steam library installed to a non-standard location, then hopefully you can remember where you set it up well enough to know the path.
+   - If the game is installed on an SD card, the path will instead be `Z:/run/media/<USERNAME>/<random-numbers>/steamapps/common/<GAME>`. You'll have to browse for the folder yourself to see what the `random-numbers` are.
 
-And that's it! Do be sure to verify that the patch is actually active upon booting the game. The script might have failed even if you reached the success screen, since WINE makes it difficult to know for sure whether something went wrong.
+   - If you have your Steam library installed to a different non-standard location, then hopefully you can remember where you set it up well enough to know the path.
+
+1. **For Robotics;Notes Elite and DaSH,** you'll probably want to install a Community Layout for the controls as the official one is borderline non-functional.
+
+And that's it! Do be sure to [verify that the patch is actually active upon booting the game](/docs/VERIFY.md). The script might have failed even if you reached the success screen, since WINE makes it difficult to know for sure whether something went wrong.
 
 ## Something Went Wrong
 
 Worry not! See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) for a list of common issues and how to proceed.
+
+------------
 
 The Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux has been tested on Arch Linux, Fedora 37, and SteamOS 3.x. Any pull requests or feedback related to other distribtions are especially appreciated.

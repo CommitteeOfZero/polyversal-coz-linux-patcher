@@ -29,7 +29,7 @@ You'll want to make sure both the Polyversal script and the CoZ patch installer 
 
 The extracted Polyversal folder should at least have the script itself, named `polyversal`, and the desktop entry `Polyversal.desktop.`
 
-The extracted patch folder should have the installer EXE file, `[GameName]-Installer.exe`, several DLL files that start with `Qt5` (for example, `Qt5Core.dll`), along with a few folders such as `DIST` and `iconengines`.
+The extracted patch folder should have the installer EXE file, `[GameName]-Installer.exe`, several DLL files that start with `Qt5` (for example, `Qt5Core.dll`), and a few folders such as `DIST` and `iconengines`.
 
 If either of the folders look like they are missing some or all of these files, then try extracting them again or consider using a CLI tool like [`unzip`](https://linux.die.net/man/1/unzip) or [`tar`](https://linux.die.net/man/1/tar).
 
@@ -55,7 +55,7 @@ If you got to the success screen in the CoZ patch installer but the patch doesn'
 
 ## Videos won't play in Anonymous;Code
 
-Read [the instructions](/README.md#setup) carefully! A;C currently requires [a custom Proton-GE build](https://sonome.dareno.me/projects/coz-linux-deck.html) to fix video playback.
+Read [the instructions](/README.md#setup) carefully! A;C currently requires [a custom Proton-GE build](/docs/AC.md) to fix video playback.
 
 ## Double-clicking on `Polyversal.desktop` opens a file with some weird text
 
