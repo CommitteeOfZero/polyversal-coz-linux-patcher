@@ -470,6 +470,7 @@ function copy_steamgrid() {
 # S;G and C;C both launch the default launcher (Launcher.exe and launcher.exe,
 # respectively) instead of the patched LauncherC0.exe.
 # Fix by symlinking default launcher to patched.
+# Jan 2024: S;G0 too
 function apply_launcherfix() {
 
   # usage: apply_launcherfix
@@ -484,9 +485,9 @@ function apply_launcherfix() {
   local defaultlauncher
   case $gamecode in
     sg) defaultlauncher=Launcher.exe  ;;
-    cc) defaultlauncher=launcher.exe  ;;
+    cc | sg0) defaultlauncher=launcher.exe  ;;
     *)
-      log_error 'u dun mucked up bozo, which launcher were you even trying to fix'
+      log_error "$gamecode does not have a launcherfix applied. how did you do this?"
       popd
       return 3  ;;
   esac
@@ -494,7 +495,7 @@ function apply_launcherfix() {
   if [[ ! ( -f $defaultlauncher && -f LauncherC0.exe ) ]]; then
     log_error "the default launcher and CoZ launcher were not both present in gamedir '$gamedir', unable to proceed with fix"
     ls -l "$defaultlauncher" LauncherC0.exe >&2
-    zenity_error "$gamename's game directory did have the default and patched launcher both present, unable to apply launcher fix. Was the patch installed correctly?"
+    zenity_error "$gamename's game directory did not have the default and patched launcher both present, unable to apply launcher fix. Was the patch installed correctly?"
   elif [[ $(readlink "$defaultlauncher") == LauncherC0.exe ]]; then
     log_warn "$defaultlauncher was already symlinked to LauncherC0, has this script already been run?"
   else
@@ -523,9 +524,9 @@ function undo_launcherfix() {
   local defaultlauncher
   case $gamecode in
     sg) defaultlauncher=Launcher.exe  ;;
-    cc) defaultlauncher=launcher.exe  ;;
+    cc | sg0) defaultlauncher=launcher.exe  ;;
     *)
-      log_error 'uh oh bozo, which launcher were you even trying to fix uhh i mean undo'
+      log_error "$gamecode does not have a launcherfix, nothing to undo. how?"
       popd
       return 3  ;;
   esac
@@ -649,7 +650,7 @@ function install_patch() {
 
   $has_steamgrid && copy_steamgrid "$patch_dir"
   # Currently known launcher issues exist with s;g and c;c
-  [[ $gamecode == sg || $gamecode == cc ]] && apply_launcherfix
+  [[ $gamecode == sg || $gamecode == cc || $gamecode == sg0 ]] && apply_launcherfix
 
   log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
   zenity --info --title 'Polyversal Success!' \
@@ -680,7 +681,7 @@ function uninstall_patch() {
   fi
   log_info "running command: \`$ptx_winecmd\`"
 
-  [[ $gamecode == sg || $gamecode == cc ]] && undo_launcherfix
+  [[ $gamecode == sg || $gamecode == cc || $gamecode == sg0 ]] && undo_launcherfix
   if ! eval "$ptx_winecmd"; then
     log_error "patch uninstallation exited with nonzero status"
     zenity_error "Patch uninstallation exited with a nonzero status."
