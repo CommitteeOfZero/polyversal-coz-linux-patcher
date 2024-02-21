@@ -253,14 +253,8 @@ fi
 
 set_logcolors   # after all the output redirection
 
-
-log_info "Starting Polyversal Patcher on $(date) ..."
-
-
-### set GUI/CLI mode ###
-
-# GUI mode: 0 args
-# CLI mode: 2 or 3 args
+# GUI mode: 0 positional args
+# CLI mode: >= 1 args
 is_gui=false
 if [[ $# -eq 0 ]]; then
   if ! is_cmd zenity; then
@@ -270,6 +264,23 @@ if [[ $# -eq 0 ]]; then
   fi
   is_gui=true
 fi
+
+
+# Get some basic info on the user's machine (distro, kernel, CPU/GPU if it works)
+os_pretty_name=$(grep -E ^PRETTY_NAME /etc/os-release)
+mobo_vendor=$(cat /sys/devices/virtual/dmi/id/board_vendor)
+mobo_name=$(cat /sys/devices/virtual/dmi/id/board_name)
+cpu_name=$(lscpu | sed -nE 's/Model name:[[:space:]]+(.+)/\1/p')
+vga_controller_name=$(lspci | sed -nE 's/^.*VGA compatible controller: (.+)/\1/p')
+weird_3d_name=$(lspci | sed -nE 's/^.*3D controller: (.+)/\1/p')  # some nvidia laptops do this for some reason
+gpu_output=$vga_controller_name
+[[ -n $weird_3d_name ]] && gpu_output="VGA compatible controller: $vga_controller_name ; 3D controller: $weird_3d_name"
+
+log_info "Machine info: $(uname -srmo) ${os_pretty_name:-[no pretty name found]}"
+log_info "Hardware: ${mobo_vendor:-[could not detect mobo vendor]} ${mobo_name:-[could not detect mobo name]} | ${cpu_name:-[could not detect CPU]} | ${gpu_output:-[could not detect GPU]}"
+
+
+log_info "Starting Polyversal Patcher on $(date) ..."
 
 
 ### Protontricks Setup ###
