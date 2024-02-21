@@ -137,6 +137,9 @@ The following options are available when invoking the script from the terminal.
 - `-r | --steamroot NEW_ROOT`
   - Use `NEW_ROOT` as the root of your steam install instead of `~/.steam/root`.
   - This likely has limited use cases, though it may help if you have Flatpak Steam installed and the root is in `/var/app/...`. Do note that Flatpak Steam has not been tested at the time of writing.
+- `-F | --force-flatpak`
+  - Use Flatpak Protontricks even if there exists a system install.
+  - Very useful for development, but also nice if your package manager doesn't yet have the latest version in its repos. Or if you just feel like it.
 
 ## Notes
 

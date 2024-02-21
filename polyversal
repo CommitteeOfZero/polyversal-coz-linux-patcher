@@ -35,7 +35,7 @@ readonly AC_PROTON_DIRNAME='protonge-anonymouscode'
 function print_usage() {
   cat << EOF >&2
 usage: polyversal [ -v | --verbose ] [ -h | --help ] [ --log ]
-                  [ -r | --steamroot ] ...
+                  [ -r | --steamroot ] [ -F | --force-flatpak ] ...
 
 Use a GUI for selecting everything graphically.
 $ $progname
@@ -69,6 +69,8 @@ options:
                             default when running from the desktop file
   -r, --steamroot NEW_ROOT  Use NEW_ROOT as Steam's root directory instead of
                             ~/.local/share/Steam
+  -F, --force-flatpak       Force the use of Flatpak Protontricks even if a
+                            system install is detected.
 
 EOF
 }
