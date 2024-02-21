@@ -8,10 +8,9 @@ readonly progname
 DATADIR=$(dirname "$0")
 readonly DATADIR
 
-# Protontricks 1.10.1 or later is needed because anything earlier gives a
-# cryptic message about magic numbers.
+# Protontricks versions earlier than this minversion will cause issues that are hard to make sense of.
 readonly ptx_flatpak='com.github.Matoking.protontricks'
-readonly ptx_minversion='1.10.1'
+readonly ptx_minversion=1.11.0
 
 # For log files and the like, all hail ISO 8601.
 # People likely won't be running this more than once in a second.
@@ -174,7 +173,10 @@ function zenity_warn() {
 # 'fp' = Flatpak, 'sys' = system install
 # Other arguments don't do anything. Don't use them!
 # is_ptxvalid <fp|sys>
-function is_ptxvalid() {
+function check_ptx() {
+
+  # usage: check_ptx <fp|sys>
+
   local ptx_cmd
   case $1 in
     fp)
@@ -186,18 +188,20 @@ function is_ptxvalid() {
   # Decent way to check it's actually functional.
   local cur_ver
   ! cur_ver=$($ptx_cmd --version) && return 1
+  log_info "protontricks version output: '$cur_ver'"
 
   local older_ver
   older_ver=$(printf '%s\n%s\n' "protontricks ($ptx_minversion)" "$cur_ver" | sort -V | head -n 1)
 
+  # really only useful for system protontricks bc we'll always update flatpak
   [[ $older_ver == "protontricks ($ptx_minversion)" ]]
 }
 
 
 ### Option Parsing ###
 
-longopts='help,verbose,log,steamroot:,i-really-want-to-run-this-as-root-dont-question-me-boy'
-if ! parsed_args=$(getopt -n "$progname" -o 'hvr:' --long "$longopts" -- "$@"); then
+longopts='help,verbose,log,steamroot:,force-flatpak,i-really-want-to-run-this-as-root-dont-question-me-boy'
+if ! parsed_args=$(getopt -n "$progname" -o 'hvr:F' --long "$longopts" -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage
   exit 1
@@ -207,6 +211,7 @@ eval set -- "$parsed_args"
 mode_debug=false
 mode_filelog=false
 STEAMROOT=$HOME/.steam/root
+FORCE_FLATPAK=false
 allow_root=false
 while true; do
   case "$1" in
@@ -222,6 +227,9 @@ while true; do
     -r | --steamroot)
       STEAMROOT=$2
       shift 2 ;;
+    -F | --force-flatpak)
+      FORCE_FLATPAK=true
+      shift ;;
     --i-really-want-to-run-this-as-root-dont-question-me-boy)
       allow_root=true
       shift ;;
@@ -283,8 +291,6 @@ log_info "Hardware: ${mobo_vendor:-[could not detect mobo vendor]} ${mobo_name:-
 log_info "Starting Polyversal Patcher on $(date) ..."
 
 
-### Protontricks Setup ###
-
 # Detect whether the machine is a Steam Deck.
 is_deck=false
 if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
@@ -292,55 +298,79 @@ if grep -qE '^VERSION_CODENAME=holo' /etc/os-release; then
   log_info "detected Steam Deck environment ..."
 fi
 
+
+### Functionality Functions ###
+
 # We need Protontricks either through a system install or through Flatpak to
 # work the magic. Prefer system install since it plays nice with relative dirs
 # and doesn't need permissions to be setup, but if it's unavailable or outdated
 # then use Flatpak.
-ptx_cmd='protontricks'
+ptx_cmd=
 is_flatpak=false
-if is_cmd protontricks && is_ptxvalid sys; then
-  log_info "detected valid system install of protontricks ..."
-else
-  if is_cmd protontricks; then
-    log_warn "system install of protontricks has insufficient version: $(protontricks --version) < $ptx_minversion"
+ptx_pid=  # this will be run in a subshell on script start so the actual GUI starts right away
+function setup_protontricks() {
+
+  # usage: setup_protontricks
+
+  local ret_code=0
+
+  # check for valid system install
+  if ! $FORCE_FLATPAK; then
+    if is_cmd protontricks; then
+      if check_ptx sys; then
+        log_info "detected valid system install of protontricks"
+
+        # because i'm funny.
+        # (but more precisely because we only ever send this function to the background, and subshells can't modify
+        # global variables like $ptx_cmd belonging to the parent shell, so we set it based on the return code instead.)
+        # now LAUGH
+        return 69
+      else
+        log_warn "system install of protontricks failed basic version check. defaulting to flatpak"
+      fi
+    else
+      log_info "system install of protontricks not found"
+    fi
   else
-    log_info "system install of protontricks not found"
-  fi
+    log_info "forcing Flatpak protontricks"
+  fi  # ififif fififi, no bad code smell here for me
 
   log_info "proceeding with flatpak ..."
 
   # Nothing doing if no flatpak :(
   if ! is_cmd flatpak; then
-    log_fatal "either flatpak nor valid system install of protontricks was detected"
-    zenity_error "Neither Flatpak nor system Protontricks >= $ptx_minversion was found. Please install one of the two and then try again."
-    exit 1
+    log_fatal "neither flatpak nor valid system install of protontricks was detected"
+    return 1
   fi
 
   # Install protontricks if it's not already
-  if ! flatpak list | grep -q "$ptx_flatpak" -; then
+  local just_installed=false  # one would hope that a fresh install grabs the latest version
+  if ! flatpak list --system | grep -q "$ptx_flatpak" -; then
     log_warn "protontricks is not installed on flatpak. attempting installation ..."
-    if ! flatpak install -y "$ptx_flatpak"; then
+
+    # one would think this should be --user, but no. --system is the default and --user straight up doesn't find the
+    # package on some systems (read: mine)
+    if ! flatpak install --system -y "$ptx_flatpak"; then
       log_fatal "error occurred while installing flatpak protontricks"
-      zenity_error "An error occurred while installing Protontricks via Flatpak."
-      exit 1
+      return 2
     fi
+    just_installed=true
     log_info "flatpak protontricks installed successfully"
   fi
 
   # Just update no matter what, outdated versions beyond the minimum have alrady caused issues
-  if ! flatpak update -y "$ptx_flatpak"; then
+  if ! $just_installed && ! flatpak update --system -y "$ptx_flatpak"; then
     log_warn "error occurred while updating flatpak protontricks"
-    zenity_warn "An error occurred while updating Flatpak Protontricks. The script will continue, although this may or may not cause issues."
+    ret_code=43  # not dire enough to kill the function, or by extension the script
   else
     log_info "flatpak protontricks either updated successfully or was already up-to-date"
   fi
 
   is_flatpak=true
-  ptx_cmd="flatpak run $ptx_flatpak"
-fi
+  [[ $ret_code != 43 ]] && ret_code=42  # return codes only go up to 255 and i'm devastated
 
-
-### Functionality Functions ###
+  return $ret_code
+}
 
 # Get the target game and initialize the relevant variables
 appid=
@@ -430,6 +460,43 @@ function set_game() {
       exit 1
       ;;
   esac
+
+  # for all script verbs that use protontricks, THIS is the first place an actual protontricks command is used.
+  # so we wait here for setup_protontricks to complete if it hasn't yet.
+  wait $ptx_pid
+  local setup_ret=$?
+  log_debug "ptx setup returned $setup_ret"
+
+  # return codes for setup_protontricks are:
+  # 0 - should be impossible
+  # 1 - neither `flatpak` nor system ptx was found on the system
+  # 2 - something went wrong installing flatpak ptx
+  # 42 - use flatpak protontricks
+  # 43 - use flatpak, but something went wrong while updating
+  # 69 - use system protontricks
+  case $setup_ret in
+    0)
+      zenity_error "This window shouldn't appear; something has gone horribly wrong. Please open a GitHub issue saying you saw this if you have a minute."
+      log_error "reached the impossible retcode 0 from setup_protontricks, AAAAAAAAAA"
+      ;;
+    1)
+      zenity_error "Neither Flatpak nor system Protontricks >= $ptx_minversion was found. Please install one of the two and then try again."
+      exit 1 ;;
+    2)
+      zenity_error "An error occurred while installing Protontricks via Flatpak. Check the logs for details."
+      exit 2 ;;
+    42)
+      ptx_cmd="flatpak run $ptx_flatpak"
+      ;;
+    43)
+      ptx_cmd="flatpak run $ptx_flatpak"
+      zenity_warn "An error occurred while updating Flatpak Protontricks. The script will continue, but this may cause issues."
+      ;;  # no exit, just a warning
+    69)  # I SAID LAUGH
+      ptx_cmd='protontricks'
+      ;;
+  esac
+  log_debug "ptx setup subshell finished, ptx_cmd = '$ptx_cmd'"
 
   if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
     # protontricks outputs to stdout even in the case of an error, so $gamedir actually has the error message.
@@ -1033,6 +1100,10 @@ function start_screen() {
 }
 
 
-# Actually start the script
+## Actually start the script
+
+# send the setup to a subshell so that there's no delay in the GUI startup. now THAT'S ux. until it breaks. which it might
+setup_protontricks &
+ptx_pid=$!
 check_update &
 start_screen "$@"
