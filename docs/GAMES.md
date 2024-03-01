@@ -10,7 +10,7 @@ Below is a table with relevant information for each game that currently has a pa
 | CHAOS;CHILD           |        8                    |       cc       | 970570     |
 | STEINS;GATE 0         |        8                    |      sg0       | 825630     |
 | ROBOTICS;NOTES DaSH   |        7[^rn]               |      rnd       | 1111390    |
-| ANONYMOUS;CODE        |  [Custom Proton-GE build](http://sonome.dareno.me/projects/coz-linux-deck.html)     |      ac        | 2291020    |
+| ANONYMOUS;CODE        |  [Custom Proton-GE build](https://github.com/CommitteeOfZero/ProtonGE-AC/releases)     |      ac        | 2291020    |
 
 Using Proton Experimental may or may not work for any given game; be sure to try it with the required version given here before troubleshooting further.
 

@@ -4,6 +4,8 @@ This Bash script is intended to automate the process of installing CoZ Steam pat
 
 **The instructions below are written specifically for the Steam Deck** as this has proven to be the most common use case. They should be largely adaptable to any desktop Linux installation, but for more general instructions, system requirements, and other information about the script including the CLI mode, see [GENERAL-INFO.md](/docs/GENERAL-INFO.md).
 
+See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if anything goes wrong during usage.
+
 ## Setup
 
 1. Switch to [Desktop Mode](https://youtu.be/FAf2s99-iik).
@@ -54,4 +56,4 @@ Worry not! See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) for a list of comm
 
 ------------
 
-The Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux has been tested on Arch Linux, Fedora 37, and SteamOS 3.x. Any pull requests or feedback related to other distribtions are especially appreciated.
+The Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux has been tested on Arch Linux, Fedora 37, and SteamOS 3.x. Any pull requests or feedback related to other distributions are especially appreciated.

@@ -25,8 +25,7 @@ readonly URL_RELEASES="https://github.com/${REPO_ID}/releases"
 readonly URL_API_LATEST="https://api.github.com/repos/${REPO_ID}/releases/latest"
 
 # Custom Proton download
-readonly AC_PROTON_URL='https://hawkhe.art/protonge-anonymouscode.tar.gz'
-readonly AC_PROTON_MD5='1ab4a7d9d0351e0242436caf2964b73a'
+readonly AC_PROTON_URL='https://github.com/CommitteeOfZero/ProtonGE-AC/releases/download/1.0.0/protonge-anonymouscode.tar.gz'
 readonly AC_PROTON_DIRNAME='protonge-anonymouscode'
 
 
@@ -854,7 +853,7 @@ function download_ac_proton() {
 
   # CLI is so much easier jfc
   if ! $is_gui; then
-    if ! curl -o "$proton_tar_name" "$AC_PROTON_URL"; then
+    if ! curl -Lo "$proton_tar_name" "$AC_PROTON_URL"; then
       log_error "cURL error occurred while downloading custom proton"
       exit 1
     fi
@@ -869,7 +868,12 @@ function download_ac_proton() {
     exit 1
   fi
 
-  curl -o "$proton_tar_name" "$AC_PROTON_URL" > "$curl_fifo" 2>&1 &
+  if $mode_debug; then
+    # show cURL output for debugging
+    curl -Lo "$proton_tar_name" "$AC_PROTON_URL" 2>&1 | tee "$curl_fifo" 1>&2 &
+  else
+    curl -Lo "$proton_tar_name" "$AC_PROTON_URL" > "$curl_fifo" 2>&1 &
+  fi
   dl_proc=$!
 
   (

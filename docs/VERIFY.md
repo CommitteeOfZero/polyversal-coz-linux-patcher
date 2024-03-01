@@ -2,7 +2,7 @@
 
 Below you can find a list of the quickest ways to verify that the installation of each game's CoZ patch was successful.
 
-Regardless of the specific game, do make sure upon launching from Steam that you are met with the black CoZ game launcher and not the vanilla (uglier) beige launcher.
+Regardless of the specific game, do make sure upon launching from Steam that you are met with the black CoZ game launcher and not the (uglier) beige vanilla launcher.
 
 As always, check [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if it turns out that your game has in fact not been patched correctly.
 
