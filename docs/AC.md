@@ -20,4 +20,6 @@ The Polyversal Patcher makes it easy to install this Proton version:
 
 And that's it! You can [return to the instructions](/README.md#setup) and pick up where you left off.
 
-For troubleshooting, see the aptly-named [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md).
+If for some reason the script is unable to successfully install the custom Proton, you can [directly download it here](https://github.com/CommitteeOfZero/ProtonGE-AC/releases/download/1.0.0/protonge-anonymouscode.tar.gz) and [install it manually](https://github.com/GloriousEggroll/proton-ge-custom#installation).
+
+For all other troubleshooting, see the aptly-named [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md).
