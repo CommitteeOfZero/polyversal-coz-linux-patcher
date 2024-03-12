@@ -83,6 +83,22 @@ Once the terminal is open, simply invoke it by typing the below command and hitt
 
 The launch window should then appear.
 
+If that still doesn't work, there's one more thing you can try: running the script via the CLI mode. This is far less prone to issues, but it lacks a graphical interface.
+
+Luckily, it's still very easy to do. In the terminal that you opened, paste or type the following but **don't** hit enter yet:
+
+```bash
+./polyversal install <GAME> 
+```
+
+Be sure to include the trailing space, and replace `<GAME>` with the [abbreviation of the game you want to patch](/docs/GAMES.md). For example, Robotics;Notes ELITE would be `./polyversal install rne `.
+
+Then, click and drag the CoZ patch folder from the file browser onto the terminal and hit Enter. Hopefully the script runs successfully at this point and you are met with the patch launcher.
+
+![A gif demonstrating how to run the script in CLI mode](/assets/gif/cli.gif "Fish is objectively the best shell, but I like zsh")
+
+For other script actions besides installing a patch, e.g. nuking a prefix or installing the A;C Proton build, see [the full docs on the CLI mode](/docs/GENERAL-INFO.md#cli).
+
 ## Nothing worked and everything is broken! HELP!
 
 First of all, calm down. Yelling isn't going to get us anywhere.
