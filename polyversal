@@ -2,6 +2,10 @@
 
 ### Constants ###
 
+# Script version, used to check if out-of-date.
+# Update this when creating a new release.
+readonly VERSION=2.1.1
+
 progname="$(basename "$0")"
 readonly progname
 
@@ -18,8 +22,7 @@ function iso_date() { date +%Y%m%dT%H%M%S; }
 exectime=$(iso_date)
 readonly exectime
 
-# For checking whether the script is out-of-date
-readonly VERSION=2.1.0
+# Repo info for version check
 readonly REPO_ID="CommitteeOfZero/polyversal-coz-linux-patcher"
 readonly URL_RELEASES="https://github.com/${REPO_ID}/releases"
 readonly URL_API_LATEST="https://api.github.com/repos/${REPO_ID}/releases/latest"
