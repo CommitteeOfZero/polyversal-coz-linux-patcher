@@ -436,7 +436,7 @@ function set_game() {
       ;;
     'cc' | 'chaos'[\;\ ]'child')
       appid=970570
-      patch_exe='CCPatch-Installer.exe'
+      patch_exe='CCSteamPatch-Installer.exe'
       gamename="CHAOS;CHILD"
       gamecode=cc
       ;;
