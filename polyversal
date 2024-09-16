@@ -502,13 +502,14 @@ function set_game() {
   esac
   log_debug "ptx setup subshell finished, ptx_cmd = '$ptx_cmd'"
 
-  if ! gamedir=$($ptx_cmd -c 'pwd' $appid); then
+  if ! gamedir=$($ptx_cmd -c 'printf "%s" "$STEAM_APP_PATH"' $appid); then
     # protontricks outputs to stdout even in the case of an error, so $gamedir actually has the error message.
-    printf '%s\n' "$gamedir" >&2
     log_fatal "protontricks error while getting $gamecode game directory. likely is not installed or has not been run to generate prefix."
+    log_fatal "output of protontricks command: '$gamedir'"
     zenity_error "Unable to locate $gamename's game directory. This likely means you have not yet run and quit the game once to generate its Proton prefix."
     exit 99
   fi
+  log_info "using game directory '$gamedir'"
 }
 
 # CHN CoZ patch includes custom SteamGrid images, but since the patch is built for
@@ -757,7 +758,9 @@ function uninstall_patch() {
     exit 1
   fi
 
-  local ptx_winecmd="$ptx_cmd -c '$compat_mts wine $uninstall_exe' $appid"
+  # $STEAM_APP_PATH is an env variable set by protontricks when it spawns its subshell, so we have to escape the $ lest
+  # it be interpreted by this script and always evaluate to empty
+  local ptx_winecmd="$ptx_cmd -c 'cd \"\$STEAM_APP_PATH\" && $compat_mts wine $uninstall_exe' $appid"
   if $mode_filelog; then
     ptx_winecmd+=" > ${logname}-wine.log 2>&1"
   fi
