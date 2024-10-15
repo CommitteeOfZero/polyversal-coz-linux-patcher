@@ -14,7 +14,7 @@ readonly DATADIR
 
 # Protontricks versions earlier than this minversion will cause issues that are hard to make sense of.
 readonly ptx_flatpak='com.github.Matoking.protontricks'
-readonly ptx_minversion=1.11.0
+readonly ptx_minversion=1.12.0
 
 # For log files and the like, all hail ISO 8601.
 # People likely won't be running this more than once in a second.

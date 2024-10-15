@@ -6,9 +6,6 @@ This Bash script is intended to automate the process of installing CoZ Steam pat
 
 See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if anything goes wrong during usage.
 
-> [!IMPORTANT]
-> **The latest version of Steam currently needs a beta version of Protontricks to be installed** due to an upstream issue from Valve. [See here](https://github.com/Matoking/protontricks/issues/304#issuecomment-2220599470) for installation guidance, and follow the instructions in the *Flatpak/Flathub* section (or whichever version you have installed).
-
 ## Setup
 
 1. Switch to [Desktop Mode](https://youtu.be/FAf2s99-iik).
