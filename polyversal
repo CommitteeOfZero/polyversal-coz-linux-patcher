@@ -57,7 +57,9 @@ $ $progname ac-proton
 Game abbreviations:
   chn
   sg
+  sge
   rne
+  lbp
   cc
   sg0
   rnd
@@ -390,14 +392,16 @@ function set_game() {
   local arg_game
   if $is_gui; then
     arg_game=$(zenity --list --radiolist --title "$2" \
-        --height 400 --width 600            \
-        --column "Select" --column "Title"  \
-        TRUE  'CHAOS;HEAD NOAH'             \
-        FALSE 'STEINS;GATE'                 \
-        FALSE 'ROBOTICS;NOTES ELITE'        \
-        FALSE 'CHAOS;CHILD'                 \
-        FALSE 'STEINS;GATE 0'               \
-        FALSE 'ROBOTICS;NOTES DaSH'               \
+        --height 400 --width 600                      \
+        --column "Select" --column "Title"            \
+        TRUE  'CHAOS;HEAD NOAH'                       \
+        FALSE 'STEINS;GATE'                           \
+        FALSE 'STEINS;GATE ELITE'                     \
+        FALSE 'ROBOTICS;NOTES ELITE'                  \
+        FALSE 'STEINS;GATE: Linear Bounded Phenogram' \
+        FALSE 'CHAOS;CHILD'                           \
+        FALSE 'STEINS;GATE 0'                         \
+        FALSE 'ROBOTICS;NOTES DaSH'                   \
         FALSE 'ANONYMOUS;CODE')
     local zen_ret=$?
     log_debug "zen_ret for set_game = $zen_ret"
@@ -428,11 +432,23 @@ function set_game() {
       gamename="STEINS;GATE"
       gamecode=sg
       ;;
+    'sge' | 'steins'[\;\ ]'gate elite')
+      appid=819030
+      patch_exe='SGEPatch-Installer.exe'
+      gamename="STEINS;GATE ELITE"
+      gamecode=sge
+      ;;
     'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
       appid=1111380
       patch_exe='RNEPatch-Installer.exe'
       gamename="ROBOTICS;NOTES ELITE"
       gamecode=rne
+      ;;
+    'lbp' | 'steins'[\;\ ]'gate: linear bounded phenogram')
+      appid=930910
+      patch_exe='SGLBPPatch-Installer.exe'
+      gamename="STEINS;GATE: Linear Bounded Phenogram"
+      gamecode=lbp
       ;;
     'cc' | 'chaos'[\;\ ]'child')
       appid=970570
