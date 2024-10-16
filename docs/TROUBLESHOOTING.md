@@ -4,7 +4,7 @@
 
 There are several problems that can occur while using this script. This page serves as an FAQ so that you can hopefully quickly debug and fix any that might happen to you.
 
-The [First Steps](#first-steps) are a good place to start, or if you see your specific issue in the Table of Contents below then you can jump straight there.
+The [First Steps](#first-steps) are a good place to start, or [this section on the `.desktop` file silently failing](#i-completed-all-the-steps-successfully-but-the-patch-isnt-applied) since that one seems quite common. If you see your specific issue in the Table of Contents below then you can jump straight there.
 
 ## Table of Contents
 
