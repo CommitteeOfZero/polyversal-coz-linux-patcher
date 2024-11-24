@@ -570,6 +570,7 @@ function copy_steamgrid() {
 # respectively) instead of the patched LauncherC0.exe.
 # Fix by symlinking default launcher to patched.
 # Jan 2024: S;G0 too
+# Nov 2024; S;GLBP
 function apply_launcherfix() {
 
   # usage: apply_launcherfix
@@ -583,7 +584,7 @@ function apply_launcherfix() {
 
   local defaultlauncher
   case $gamecode in
-    sg) defaultlauncher=Launcher.exe  ;;
+    sg | lbp) defaultlauncher=Launcher.exe  ;;
     cc | sg0) defaultlauncher=launcher.exe  ;;
     *)
       log_error "$gamecode does not have a launcherfix applied. how did you do this?"
@@ -622,7 +623,7 @@ function undo_launcherfix() {
 
   local defaultlauncher
   case $gamecode in
-    sg) defaultlauncher=Launcher.exe  ;;
+    sg | lbp) defaultlauncher=Launcher.exe  ;;
     cc | sg0) defaultlauncher=launcher.exe  ;;
     *)
       log_error "$gamecode does not have a launcherfix, nothing to undo. how?"
