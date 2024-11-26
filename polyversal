@@ -750,7 +750,7 @@ function install_patch() {
 
   $has_steamgrid && copy_steamgrid "$patch_dir"
   # Currently known launcher issues exist with s;g and c;c
-  [[ $gamecode == sg || $gamecode == cc || $gamecode == sg0 ]] && apply_launcherfix
+  [[ $gamecode == sg || $gamecode == cc || $gamecode == sg0 || $gamecode == lbp ]] && apply_launcherfix
 
   log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
   zenity --info --title 'Polyversal Success!' \
@@ -783,7 +783,7 @@ function uninstall_patch() {
   fi
   log_info "running command: \`$ptx_winecmd\`"
 
-  [[ $gamecode == sg || $gamecode == cc || $gamecode == sg0 ]] && undo_launcherfix
+  [[ $gamecode == sg || $gamecode == cc || $gamecode == sg0 || $gamecode == lbp ]] && undo_launcherfix
   if ! eval "$ptx_winecmd"; then
     log_error "patch uninstallation exited with nonzero status"
     zenity_error "Patch uninstallation exited with a nonzero status."
