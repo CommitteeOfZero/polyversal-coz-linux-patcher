@@ -726,14 +726,10 @@ function install_patch() {
   # now, FP Protontricks gives the user a prompt telling it which folder to give
   # access to anyway, so it's not too big of an issue as long as the user can
   # (a) read, and (b) copy and paste a single command.
-  compat_mts=
-  if $is_deck; then
-    flatpak override --user --filesystem=/run/media/ "$ptx_flatpak"
-    compat_mts="STEAM_COMPAT_MOUNTS=/run/media/"
-  fi
+  $is_deck && flatpak override --user --filesystem=/run/media/ "$ptx_flatpak"
   $is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 
-  local ptx_winecmd="$ptx_cmd -c 'cd \"$patch_dir\" && $compat_mts wine $patch_exe' $appid"
+  local ptx_winecmd="$ptx_cmd -c 'cd \"$patch_dir\" && wine $patch_exe' $appid"
   if $mode_filelog; then
     ptx_winecmd+=" > ${logname}-wine.log 2>&1"
   fi
@@ -777,7 +773,7 @@ function uninstall_patch() {
 
   # $STEAM_APP_PATH is an env variable set by protontricks when it spawns its subshell, so we have to escape the $ lest
   # it be interpreted by this script and always evaluate to empty
-  local ptx_winecmd="$ptx_cmd -c 'cd \"\$STEAM_APP_PATH\" && $compat_mts wine $uninstall_exe' $appid"
+  local ptx_winecmd="$ptx_cmd -c 'cd \"\$STEAM_APP_PATH\" && wine $uninstall_exe' $appid"
   if $mode_filelog; then
     ptx_winecmd+=" > ${logname}-wine.log 2>&1"
   fi
