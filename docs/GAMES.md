@@ -10,11 +10,9 @@ Below is a table with relevant information for each game that currently has a pa
 | CHAOS;HEAD NOAH                       | 8                  | chn            | 1961950    |
 | STEINS;GATE                           | 8                  | sg             | 412830     |
 | STEINS;GATE ELITE                     | 9                  | sge            | 819030     |
-| ROBOTICS;NOTES ELITE                  | 7[^rn]             | rne            | 1111380    |
+| ROBOTICS;NOTES ELITE                  | 9                  | rne            | 1111380    |
 | STEINS;GATE: Linear Bounded Phenogram | 9                  | lbp            | 930910     |
 | CHAOS;CHILD                           | 8                  | cc             | 970570     |
 | STEINS;GATE 0                         | 8                  | sg0            | 825630     |
-| ROBOTICS;NOTES DaSH                   | 7                  | rnd            | 1111390    |
+| ROBOTICS;NOTES DaSH                   | 9                  | rnd            | 1111390    |
 | ANONYMOUS;CODE                        | [Custom Proton-GE build](https://github.com/CommitteeOfZero/ProtonGE-AC/releases) | ac | 2291020 |
-
-[^rn]: The mouse support implemented by the CoZ patch for the Robotics; games appears to be broken on Proton versions 8 and above at the time of writing.
