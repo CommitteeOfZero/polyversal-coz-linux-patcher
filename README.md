@@ -24,7 +24,7 @@ See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if anything goes wrong during
 
    ![A gif of choosing Proton versions from a game's Properties menu](/assets/gif/props-proton.gif "Choosing a Proton version from R;NE's properties")
 
-1. Run the game at least once. Reaching the launcher and then pressing `Quit Game` is sufficient for this.
+1. Run the game at least once. Reaching the launcher and then pressing `Quit Game` is sufficient for this; if the game lacks a dedicated launcher, then wait for the game window to appear before quitting.
 
 ## Usage
 
