@@ -28,11 +28,9 @@ See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if anything goes wrong during
 
 ## Usage
 
-1. Run this script by double-clicking `Polyversal.desktop`.
+1. Run this script by right-clicking (L2) on `polyversal` and selecting *Run In Konsole*.
 
-   ![A gif of how to run the script](/assets/gif/run.gif "Running the script")
-
-   - **Note**: if you get a prompt asking whether you want to "Run" or "Open" the file, choose "Run".
+   ![A gif of how to run the script](/assets/gif/run-konsole.gif "Running the script")
 
 1. Enter which game you're patching and the extracted folder containing the CoZ patch. The actual patcher should launch; this might take some time.
 
@@ -48,7 +46,7 @@ See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if anything goes wrong during
 
 1. **For Robotics;Notes Elite and DaSH,** you'll probably want to install a Community Layout for the controls as the official one is borderline non-functional.
 
-And that's it! Do be sure to [verify that the patch is actually active upon booting the game](/docs/VERIFY.md). The script might have failed even if you reached the success screen, since WINE makes it difficult to know for sure whether something went wrong.
+And that's it! You can close the terminal window that was opened once you're done. Do be sure to [verify that the patch is actually active upon booting the game](/docs/VERIFY.md) - the script might have failed even if you reached the success screen, since Wine makes it difficult to know for sure whether something went wrong.
 
 ## Something Went Wrong
 

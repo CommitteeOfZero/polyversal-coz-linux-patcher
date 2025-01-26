@@ -6,8 +6,6 @@ The foundations of this script are largely built upon [u/PartTimeBento's seminal
 
 ## TL;DR
 
-Double-click the included `.desktop` entry, or directly invoke the script like so:
-
 ```bash
 ## GUI mode ##
 ./polyversal
@@ -67,8 +65,6 @@ This script features both a GUI (Graphical User Interface) mode and a CLI (Comma
 
 ### GUI
 
-There are two ways to launch the GUI: using the provided `Polyversal.desktop` entry, and running it from the command line. The easier option is to simply double-click the desktop file to launch it.
-
 To run the script in GUI mode, simply invoke it with no arguments:
 
 ```sh
@@ -77,7 +73,7 @@ To run the script in GUI mode, simply invoke it with no arguments:
 
 [See here](#command-line-options) for command options.
 
-Once launched (via either method), some selection pop-ups will appear with more windows showing up throughout the script's execution to signal errors or successes.
+Once launched, some selection pop-ups will appear with more windows showing up throughout the script's execution to signal errors or successes.
 
 You'll know the script has started successfully when you see a window similar to the following:
 
@@ -147,7 +143,7 @@ The following options are available when invoking the script from the terminal.
 
 - Flatpak Protontricks will be updated automatically if it's outdated. So, if for some arcane reason you need a specific older version installed, be aware that you will have to downgrade after this script completes.
 
-- If you *really* know what you're doing, you could turn this into a proper desktop application by modifying `Polyversal.desktop`'s "Exec" line to run the script from a static location and install it to `~/.local/share/applications`, or whever your `$XDG_DATA_HOME` points to.
+- If you *really* know what you're doing, you could turn this into a proper desktop application by creating a `Polyversal.desktop` file with an "Exec" line to run the script from a static location and install it to your `$XDG_DATA_HOME`.
 
 ## Troubleshooting
 
