@@ -584,7 +584,10 @@ function copy_steamgrid() {
 # Nov 2024; S;GLBP
 function apply_launcherfix() {
 
-  # usage: apply_launcherfix
+  # usage: apply_launcherfix <gamecode>
+
+  local gamecode=$1
+  [[ ! ($gamecode == sg || $gamecode == cc || $gamecode == sg0 || $gamecode == lbp) ]] && return 0
 
   log_info "fixing $gamecode launcher issue ..."
   if ! pushd "$gamedir"; then
@@ -623,7 +626,10 @@ function apply_launcherfix() {
 # Undo the launcher fix for uninstallation
 function undo_launcherfix() {
 
-  # usage: undo_launcherfix
+  # usage: undo_launcherfix <gamecode>
+
+  local gamecode=$1
+  [[ ! ($gamecode == sg || $gamecode == cc || $gamecode == sg0 || $gamecode == lbp) ]] && return 0
 
   log_info "undoing $gamecode launcher fix ..."
   if ! pushd "$gamedir"; then
@@ -762,8 +768,7 @@ function install_patch() {
   test -t 0 && stty sane  # band-aid for newline wonkiness that wine sometimes creates
 
   $has_steamgrid && copy_steamgrid "$patch_dir"
-  # Currently known launcher issues exist with s;g and c;c
-  [[ $gamecode == sg || $gamecode == cc || $gamecode == sg0 || $gamecode == lbp ]] && apply_launcherfix
+  apply_launcherfix "$gamecode"
 
   log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
   zenity --info --title 'Polyversal Success!' \
@@ -793,7 +798,7 @@ function uninstall_patch() {
   local ptx_winecmd=( "${ptx_cmd[@]}" -c "cd \"\$STEAM_APP_PATH\" && wine \"$uninstall_exe\"" "$appid" )
   log_info "running command: '${ptx_winecmd[*]}'"
 
-  [[ $gamecode == sg || $gamecode == cc || $gamecode == sg0 || $gamecode == lbp ]] && undo_launcherfix
+  undo_launcherfix "$gamecode"
 
   local wine_ret
   if $opt_filelog; then
