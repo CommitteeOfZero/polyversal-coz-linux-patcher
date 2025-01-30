@@ -197,14 +197,14 @@ function check_ptx() {
   local ptx_cmd
   case $1 in
     fp)
-      ptx_cmd="flatpak run $ptx_flatpak"  ;;
+      ptx_cmd=( flatpak run "$ptx_flatpak" )  ;;
     sys)
-      ptx_cmd="protontricks"  ;;
+      ptx_cmd=( protontricks )  ;;
   esac
 
   # Decent way to check it's actually functional.
   local cur_ver
-  ! cur_ver=$($ptx_cmd --version) && return 1
+  ! cur_ver=$("${ptx_cmd[@]}" --version) && return 1
   log_info "protontricks version output: '$cur_ver'"
 
   local older_ver
@@ -322,7 +322,7 @@ fi
 # work the magic. Prefer system install since it plays nice with relative dirs
 # and doesn't need permissions to be setup, but if it's unavailable or outdated
 # then use Flatpak.
-ptx_cmd=
+ptx_cmd=( )
 is_flatpak=false
 ptx_pid=  # this will be run in a subshell on script start so the actual GUI starts right away
 function setup_protontricks() {
@@ -517,19 +517,19 @@ function set_game() {
       zenity_error "An error occurred while installing Protontricks via Flatpak. Check the logs for details."
       exit 2 ;;
     42)
-      ptx_cmd="flatpak run $ptx_flatpak"
+      ptx_cmd=( flatpak run "$ptx_flatpak" )
       ;;
     43)
-      ptx_cmd="flatpak run $ptx_flatpak"
+      ptx_cmd=( flatpak run "$ptx_flatpak" )
       zenity_warn "An error occurred while updating Flatpak Protontricks. The script will continue, but this may cause issues."
       ;;  # no exit, just a warning
     69)  # I SAID LAUGH
-      ptx_cmd='protontricks'
+      ptx_cmd=( protontricks )
       ;;
   esac
-  log_debug "ptx setup subshell finished, ptx_cmd = '$ptx_cmd'"
+  log_debug "ptx setup subshell finished, ptx_cmd = '${ptx_cmd[*]}'"
 
-  if ! gamedir=$($ptx_cmd -c 'printf "%s" "$STEAM_APP_PATH"' $appid); then
+  if ! gamedir=$("${ptx_cmd[@]}" -c 'printf "%s" "$STEAM_APP_PATH"' $appid); then
     # protontricks outputs to stdout even in the case of an error, so $gamedir actually has the error message.
     log_fatal "protontricks error while getting $gamecode game directory. likely is not installed or has not been run to generate prefix."
     log_fatal "output of protontricks command: '$gamedir'"
@@ -540,10 +540,10 @@ function set_game() {
 }
 
 # CHN CoZ patch includes custom SteamGrid images, but since the patch is built for
-# Windows, the placement of those files ends up happening within the Wine prefix 
-# instead of the system-level Steam install. The following code will detect the 
-# STEAMGRID folder within the patch directory, and if it exists, copy any *.png 
-# files at its root to Steam userdata/<user_id>/config/grid within a default Steam 
+# Windows, the placement of those files ends up happening within the Wine prefix
+# instead of the system-level Steam install. The following code will detect the
+# STEAMGRID folder within the patch directory, and if it exists, copy any *.png
+# files at its root to Steam userdata/<user_id>/config/grid within a default Steam
 # path install ($HOME/.local/share/Steam)
 #
 # TODO: Add support for flatpak Steam installs.
@@ -740,14 +740,20 @@ function install_patch() {
   $is_deck && flatpak override --user --filesystem=/run/media/ "$ptx_flatpak"
   $is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 
-  local ptx_winecmd="$ptx_cmd -c 'cd \"$patch_dir\" && wine $patch_exe' $appid"
-  if $opt_filelog; then
-    ptx_winecmd+=" > ${logname}-wine.log 2>&1"
-  fi
-  log_info "running command: \`$ptx_winecmd\`"
+  local ptx_winecmd=( "${ptx_cmd[@]}" -c "cd \"$patch_dir\" && wine \"$patch_exe\"" "$appid" )
+  log_info "running command: '${ptx_winecmd[*]}'"
 
   # this performs the magic
-  if ! eval "$ptx_winecmd"; then
+  local wine_ret
+  if $opt_filelog; then
+    "${ptx_winecmd[@]}" > "${logname}-wine.log" 2>&1
+    wine_ret=$?
+  else
+    "${ptx_winecmd[@]}"
+    wine_ret=$?
+  fi
+
+  if [[ $wine_ret != 0 ]]; then
     log_error "patch installation exited with nonzero status"
     zenity_error "Patch installation exited with a nonzero status. Script execution will continue; be wary of errors and check the output for information."
   else
@@ -784,14 +790,21 @@ function uninstall_patch() {
 
   # $STEAM_APP_PATH is an env variable set by protontricks when it spawns its subshell, so we have to escape the $ lest
   # it be interpreted by this script and always evaluate to empty
-  local ptx_winecmd="$ptx_cmd -c 'cd \"\$STEAM_APP_PATH\" && wine $uninstall_exe' $appid"
-  if $opt_filelog; then
-    ptx_winecmd+=" > ${logname}-wine.log 2>&1"
-  fi
-  log_info "running command: \`$ptx_winecmd\`"
+  local ptx_winecmd=( "${ptx_cmd[@]}" -c "cd \"\$STEAM_APP_PATH\" && wine \"$uninstall_exe\"" "$appid" )
+  log_info "running command: '${ptx_winecmd[*]}'"
 
   [[ $gamecode == sg || $gamecode == cc || $gamecode == sg0 || $gamecode == lbp ]] && undo_launcherfix
-  if ! eval "$ptx_winecmd"; then
+
+  local wine_ret
+  if $opt_filelog; then
+    "${ptx_winecmd[@]}" > "${logname}-wine.log" 2>&1
+    wine_ret=$?
+  else
+    "${ptx_winecmd[@]}"
+    wine_ret=$?
+  fi
+
+  if [[ $wine_ret != 0 ]]; then
     log_error "patch uninstallation exited with nonzero status"
     zenity_error "Patch uninstallation exited with a nonzero status."
   else
@@ -989,18 +1002,19 @@ Download and install it anyway? (y/n): " answer
 
   download_ac_proton
 
-  local tar_opts='-xzf'
-  local tar_tail=
+  local tar_cmd
+  local tar_proc
   if $opt_filelog; then
-    tar_opts='-xvzf'
-    tar_tail='> "${logname}-untar.log" 2>&1'
+    tar_cmd=( tar -xvzf "$proton_tar_name" -C "$DATADIR" )
+    log_debug "running untar command: '${tar_cmd[*]}'"
+    "${tar_cmd[@]}" > "${logname}-untar.log" 2>&1 &
+    tar_proc=$!
+  else
+    tar_cmd=( tar -xzf "$proton_tar_name" -C "$DATADIR" )
+    log_debug "running untar command: '${tar_cmd[*]}'"
+    "${tar_cmd[@]}" &
+    tar_proc=$!
   fi
-
-  local tar_cmd="tar $tar_opts \"$proton_tar_name\" -C \"$DATADIR\" $tar_tail"
-  log_debug "running untar command: \`$tar_cmd\`"
-
-  eval "$tar_cmd" &
-  local tar_proc=$!
 
   log_info "extracting A;C proton build $proton_tar_name to $protondir ..."
   zenity --info --timeout 20 --title "Polyversal Extraction"   \
