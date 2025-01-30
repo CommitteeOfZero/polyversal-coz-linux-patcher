@@ -759,9 +759,10 @@ function install_patch() {
     wine_ret=$?
   fi
 
+  local all_good=true
   if [[ $wine_ret != 0 ]]; then
     log_error "patch installation exited with nonzero status"
-    zenity_error "Patch installation exited with a nonzero status. Script execution will continue; be wary of errors and check the output for information."
+    all_good=false
   else
     log_info "patch installation finished, no errors signaled."
   fi
@@ -770,9 +771,16 @@ function install_patch() {
   $has_steamgrid && copy_steamgrid "$patch_dir"
   apply_launcherfix "$gamecode"
 
-  log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
-  zenity --info --title 'Polyversal Success!' \
-      --text "Patch installation for $gamename finished. Please verify that the patch is working in case anything went wrong under the hood. Enjoy the game!"
+  if $all_good; then
+    log_info 'Success! Completed without any script-breaking issues. Enjoy the game.'
+    zenity --info --title 'Polyversal Success!' \
+        --text "Patch installation for $gamename finished. Please verify that the patch is working in case anything went wrong under the hood. Enjoy the game!"
+    return 0
+  else
+    log_error 'An error occurred while running the patch installation command. This likely (but not necessarily) means the patch was not installed correctly, but Wine makes it hard to be sure.'
+    zenity_error "Patch installation exited with errors. This likely means the patch was not successfully applied; check your game to make sure this is the case, and see <a href=\"https://github.com/CommitteeOfZero/polyversal-coz-linux-patcher/blob/main/docs/TROUBLESHOOTING.md\">the troubleshooting page</a> for more help."
+    return 1
+  fi
 }
 
 function uninstall_patch() {
@@ -809,17 +817,25 @@ function uninstall_patch() {
     wine_ret=$?
   fi
 
+  local all_good=true
   if [[ $wine_ret != 0 ]]; then
     log_error "patch uninstallation exited with nonzero status"
-    zenity_error "Patch uninstallation exited with a nonzero status."
+    all_good=false
   else
     log_info "patch uninstallation complete, no errors signaled."
   fi
   test -t 0 && stty sane
 
-  log_info 'Success! Uninstalled without any script-breaking issues.'
-  zenity --info --title 'Polyversal Success!' \
-      --text "$gamename CoZ patch uninstalled. Please verify that the game works as you expect in case anything went wrong under the hood. We hope you re-install soon :D"
+  if $all_good; then
+    log_info 'Success! Uninstalled without any script-breaking issues.'
+    zenity --info --title 'Polyversal Success!' \
+        --text "$gamename CoZ patch uninstalled. Please verify that the game works as you expect in case anything went wrong under the hood. We hope you re-install soon :D"
+    return 0
+  else
+    log_error 'An error occurred while uninstalling the patch. Verify whether it was actually uninstalled; Wine makes it hard to know for sure.'
+    zenity_error "Patch uninstallation exited with errors. Verify whether the game is actually unpatched, and see <a href=\"https://github.com/CommitteeOfZero/polyversal-coz-linux-patcher/blob/main/docs/TROUBLESHOOTING.md\">the troubleshooting page</a> for more help."
+    return 1
+  fi
 }
 
 function check_update() {
@@ -886,6 +902,7 @@ function nuke_prefix() {
   log_info "$gamename's Proton prefix successfully nuked"
   zenity --info --title 'Polyversal Success!' \
       --text "Proton prefix '$pfxdir' for $gamename successfully deleted."
+  return 0
 }
 
 # these are NOT local, since it has to be rm'd by a trap
@@ -1047,6 +1064,7 @@ Download and install it anyway? (y/n): " answer
 
   zenity --info --title 'Polyversal Success!'   \
       --text "Custom A;C Proton-GE build has successfully been installed! <b>Remember to restart Steam so that you can use it.</b>"
+  return 0
 }
 
 # clean up temp files/pipes from downloading
@@ -1152,6 +1170,8 @@ function start_screen() {
       exit 1
       ;;
   esac
+
+  return $?
 }
 
 
@@ -1162,3 +1182,5 @@ setup_protontricks &
 ptx_pid=$!
 check_update &
 start_screen "$@"
+
+exit $?
