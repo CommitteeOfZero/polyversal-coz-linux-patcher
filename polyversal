@@ -142,7 +142,7 @@ function _log_msg() {
 
   local header
   header=$progname
-  $mode_debug && header+=:${BASH_LINENO[1]}   # line number where log fn was called
+  $opt_debug && header+=:${BASH_LINENO[1]}   # line number where log fn was called
 
   local body=${*:2}
 
@@ -153,7 +153,7 @@ function log_warn() { _log_msg warn "$*"; }
 function log_error() { _log_msg err "$*"; }
 function log_fatal() { _log_msg fatal "$*"; }
 function log_debug() {
-  ! $mode_debug && return 0
+  ! $opt_debug && return 0
   _log_msg debug "$*"
 }
 
@@ -225,30 +225,30 @@ if ! parsed_args=$(getopt -n "$progname" -o 'hvr:F' --long "$longopts" -- "$@");
 fi
 eval set -- "$parsed_args"
 
-mode_debug=false
-mode_filelog=false
+opt_debug=false
+opt_filelog=false
+opt_force_flatpak=false
+opt_allow_root=false
 STEAMROOT=$HOME/.steam/root
-FORCE_FLATPAK=false
-allow_root=false
 while true; do
   case "$1" in
     -v | --verbose)
-      mode_debug=true
+      opt_debug=true
       shift ;;
     -h | --help)
       long_usage
       exit 0  ;;
     --log)
-      mode_filelog=true
+      opt_filelog=true
       shift ;;
     -r | --steamroot)
       STEAMROOT=$2
       shift 2 ;;
     -F | --force-flatpak)
-      FORCE_FLATPAK=true
+      opt_force_flatpak=true
       shift ;;
     --i-really-want-to-run-this-as-root-dont-question-me-boy)
-      allow_root=true
+      opt_allow_root=true
       shift ;;
     --)
       shift
@@ -260,7 +260,7 @@ while true; do
   esac
 done
 
-if ! $allow_root && [[ $EUID == 0 ]]; then
+if ! $opt_allow_root && [[ $EUID == 0 ]]; then
   printf '%s\n' "YOU ARE RUNNING THIS SCRIPT AS ROOT! This is VERY PROBABLY NOT what you want to do. Please run it without \`sudo'."
   exit 1
 fi
@@ -269,7 +269,7 @@ fi
 # as this script.
 logdir=${DATADIR}/logs
 logname="${logdir}/polyversal-${exectime}"  # minus the .log so we can add -wine
-if $mode_filelog; then
+if $opt_filelog; then
   # https://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
   mkdir -p "$logdir"
   exec >  >(tee -ia "${logname}.log")
@@ -332,7 +332,7 @@ function setup_protontricks() {
   local ret_code=0
 
   # check for valid system install
-  if ! $FORCE_FLATPAK; then
+  if ! $opt_force_flatpak; then
     if is_cmd protontricks; then
       if check_ptx sys; then
         log_info "detected valid system install of protontricks"
@@ -741,7 +741,7 @@ function install_patch() {
   $is_flatpak && flatpak override --user --filesystem="$patch_dir" "$ptx_flatpak"
 
   local ptx_winecmd="$ptx_cmd -c 'cd \"$patch_dir\" && wine $patch_exe' $appid"
-  if $mode_filelog; then
+  if $opt_filelog; then
     ptx_winecmd+=" > ${logname}-wine.log 2>&1"
   fi
   log_info "running command: \`$ptx_winecmd\`"
@@ -785,7 +785,7 @@ function uninstall_patch() {
   # $STEAM_APP_PATH is an env variable set by protontricks when it spawns its subshell, so we have to escape the $ lest
   # it be interpreted by this script and always evaluate to empty
   local ptx_winecmd="$ptx_cmd -c 'cd \"\$STEAM_APP_PATH\" && wine $uninstall_exe' $appid"
-  if $mode_filelog; then
+  if $opt_filelog; then
     ptx_winecmd+=" > ${logname}-wine.log 2>&1"
   fi
   log_info "running command: \`$ptx_winecmd\`"
@@ -898,7 +898,7 @@ function download_ac_proton() {
     exit 1
   fi
 
-  if $mode_debug; then
+  if $opt_debug; then
     # show cURL output for debugging
     curl -Lo "$proton_tar_name" "$AC_PROTON_URL" 2>&1 | tee "$curl_fifo" 1>&2 &
   else
@@ -991,7 +991,7 @@ Download and install it anyway? (y/n): " answer
 
   local tar_opts='-xzf'
   local tar_tail=
-  if $mode_filelog; then
+  if $opt_filelog; then
     tar_opts='-xvzf'
     tar_tail='> "${logname}-untar.log" 2>&1'
   fi
