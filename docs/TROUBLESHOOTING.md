@@ -4,7 +4,7 @@
 
 There are several problems that can occur while using this script. This page serves as an FAQ so that you can hopefully quickly debug and fix any that might happen to you.
 
-The [First Steps](#first-steps) are a good place to start, or [this section on the `.desktop` file silently failing](#i-completed-all-the-steps-successfully-but-the-patch-isnt-applied) since that one seems quite common. If you see your specific issue in the Table of Contents below then you can jump straight there.
+The [First Steps](#first-steps) are a good place to start, or if you see your specific issue in the Table of Contents below then you can jump straight there.
 
 ## Table of Contents
 
@@ -12,7 +12,6 @@ The [First Steps](#first-steps) are a good place to start, or [this section on t
   - [Ensure proper extraction](#ensure-proper-extraction)
   - [Try from a clean prefix](#try-from-a-clean-prefix)
   - [Check the logs](#check-the-logs)
-- [I completed all the steps successfully, but the patch isn't applied](#i-completed-all-the-steps-successfully-but-the-patch-isnt-applied)
 - [Videos won't play in Anonymous;Code](#videos-wont-play-in-anonymouscode)
 - [Double-clicking on `Polyversal.desktop` opens a file with some weird text](#double-clicking-on-polyversaldesktop-opens-a-file-with-some-weird-text)
 - [When I run the game the official launcher shows up. The patched CoZ launcher only shows once I quit or start the game](#when-i-run-the-game-the-official-launcher-shows-up-the-patched-coz-launcher-only-shows-once-i-quit-or-start-the-game)
@@ -45,13 +44,9 @@ Lastly, make sure you have [the right Proton version set for your target game](/
 
 ### Check the logs
 
-You can also check the most recent log files in the `logs` folder that were generated from your most recent run. The file of interest is the one **without** `-wine` in its name. See if there are any lines with "`ERROR`" or "`FATAL`" at the start and whether they tell you anything about what went wrong.
+You can also generate some log files to inspect by [running Polyversal from the command line](#how-to-run-from-the-command-line), using `./polyversal --log` as the command to run.
 
-## I completed all the steps successfully, but the patch isn't applied
-
-This is a known, rare issue with launching the script via the `.desktop` file and is non-reproducible at the time of writing.
-
-If you got to the success screen in the CoZ patch installer but the patch doesn't appear to be active, then try launching the script from the command line. [See the section on how to do so](#how-to-run-from-the-command-line). Then follow the installation process again and see if the patch is applied now.
+You'll then want to check the most recent log files in the newly generated `logs` folder that was created. The file of interest is the one **without** `-wine` in its name; see if there are any lines with "`ERROR`" or "`FATAL`" at the start and whether they tell you anything about what went wrong.
 
 ## Videos won't play in Anonymous;Code
 
@@ -61,17 +56,17 @@ Read [the instructions](/README.md#setup) carefully! A;C currently requires [a c
 
 If double-clicking the `.desktop` entry shows you a bunch of monospaced text that starts with `[Desktop Entry]`, then it's been treated as a text file rather than an application to launch.
 
-Your best bet here is to launch the script directly from the command line. [See the section on how to do so](#how-to-run-from-the-command-line).
+Your best bet here is to invoke the script directly from the command line. [See the section on how to do so](#how-to-run-from-the-command-line).
 
 ## When I run the game the official launcher shows up. The patched CoZ launcher only shows once I quit or start the game
 
-This is a known issue, though it is unknown why this happens. It was first observed in Steins;Gate, and *later* manifested in Chaos;Child. The script currently has fixes for both of these games, although it is very possible more games may be affected in the future.
+This is a known issue, though it is unknown why this happens. It was first observed in Steins;Gate and later manifested in Chaos;Child and other games. The script has fixes for affected games we currently know about, though it is very possible more games may be affected in the future.
 
-If you find that another game has this issue, you can manually fix it by backing up the official launcher EXE and then symlinking it to the patched launcher, `LauncherC0.exe`. If you don't know what that means, please open a GitHub issue noting on which game this happened to you. (If you do know, make a PR! The function is `apply_launcherfix`.)
+If you find that another game has this issue, you can manually fix it by backing up the official launcher EXE and then symlinking it to the patched launcher, `LauncherC0.exe`. If you don't know what that means, please open a GitHub issue noting on which game this happened to you. (If you do know, open a PR! The functions are `apply_launcherfix` and `undo_launcherfix`.)
 
 ## How to run from the command line
 
-Several issues can be solved by directly running the script from the command line. To do so, first open a terminal in the directory containing the script. On KDE and Steam Deck, you can do so by right-clicking on `polyversal` from within the file browser and selecting "Open Terminal Here".
+Some issues can be solved by directly running the script from the command line, rather than using the `.desktop` entry. To do so, first open a terminal in the directory containing the script. On KDE and Steam Deck, you can do so by right-clicking on `polyversal` from within the file browser and selecting "Open Terminal Here".
 
 ![Image of the "Open Terminal Here" dialog.](/assets/open-term-here.png)
 
@@ -99,16 +94,16 @@ Then, click and drag the CoZ patch folder from the file browser onto the termina
 
 For other script actions besides installing a patch, e.g. nuking a prefix or installing the A;C Proton build, see [the full docs on the CLI mode](/docs/GENERAL-INFO.md#cli).
 
-## Nothing worked and everything is broken! HELP!
+## Nothing worked and everything is broken! *HELP!*
 
 First of all, calm down. Yelling isn't going to get us anywhere.
 
-Now, if you're still having issues then there are a couple of things you can try:
+Now, if you're still having issues then there are a couple things you can try:
 
-- Check the most recent logs in the `logs` folder generated in the script's directory for any obvious errors that may have occurred in your last run.
+- [Check the logs](#check-the-logs) for any obvious errors that may have occurred in your last run.
 
 - Open a GitHub issue describing the problem that occurred. This is a great choice since others that have the same issue can then find the thread in the future.
 
-- Ask for help in the `#bug-reports` channel in the official CoZ Discord (and bring the most recent logs!).
+- Ask for help in the `#bug-reports` channel in the official CoZ Discord (and bring some logs!).
 
 If you find a solution to your problem, please feel free to open a pull request to adjust the script logic or to add the problem and its solution to this page. This is a growing page and a community effort, so any and all contributions are very appreciated.

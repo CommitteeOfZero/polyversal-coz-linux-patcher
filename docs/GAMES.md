@@ -7,7 +7,7 @@ Below is a table with relevant information for each game that currently has a pa
 
 | **Game**                              | **Proton Version** | **Short Name** | **App ID** |
 |---------------------------------------|:------------------:|:--------------:|-----------:|
-| CHAOS;HEAD NOAH                       | 8                  | chn            | 1961950    |
+| CHAOS;HEAD NOAH                       | 9                  | chn            | 1961950    |
 | STEINS;GATE                           | 8                  | sg             | 412830     |
 | STEINS;GATE ELITE                     | 9                  | sge            | 819030     |
 | ROBOTICS;NOTES ELITE                  | 9                  | rne            | 1111380    |

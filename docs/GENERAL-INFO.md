@@ -6,7 +6,7 @@ The foundations of this script are largely built upon [u/PartTimeBento's seminal
 
 ## TL;DR
 
-Double-click the included `.desktop` entry ([if it works](/docs/TROUBLESHOOTING.md#double-clicking-on-polyversaldesktop-opens-a-file-with-some-weird-text)), or directly invoke the script like so:
+Double-click the included `.desktop` entry, or directly invoke the script like so:
 
 ```bash
 ## GUI mode ##
@@ -41,8 +41,8 @@ Double-click the included `.desktop` entry ([if it works](/docs/TROUBLESHOOTING.
 ## System Requirements
 
 - Bash, plus the standard GNU coreutils
-- One of the following:
-  - [Protontricks](https://github.com/Matoking/protontricks#installation) version 1.10.1 or above
+- Either of the following:
+  - [Protontricks](https://github.com/Matoking/protontricks#installation) version 1.12.0 or above
   - [Flatpak](https://flatpak.org/setup/)
 - [GUI only] [Zenity](https://help.gnome.org/users/zenity/stable/)
   - Should be already installed with Steam. Verify with `zenity --version` if unsure
@@ -67,9 +67,7 @@ This script features both a GUI (Graphical User Interface) mode and a CLI (Comma
 
 ### GUI
 
-There are two ways to launch the GUI: using the provided `Polyversal.desktop` entry, and running it from the command line.
-
-The easier option is to simply double-click the desktop file to launch it, but [this is not guaranteed to work on all systems](/docs/TROUBLESHOOTING.md#double-clicking-on-polyversaldesktop-opens-a-file-with-some-weird-text) (and we don't know why). If it doesn't, you'll have to launch it from the command line.
+There are two ways to launch the GUI: using the provided `Polyversal.desktop` entry, and running it from the command line. The easier option is to simply double-click the desktop file to launch it.
 
 To run the script in GUI mode, simply invoke it with no arguments:
 
