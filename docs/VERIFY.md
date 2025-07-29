@@ -9,7 +9,7 @@ As always, check [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if it turns out 
 ## Table of Contents
 
 - [CHAOS;HEAD NoAH and CHAOS;CHILD](#chaoshead-noah-and-chaoschild)
-- [STEINS;GATE and STEINS;GATE 0](#steinsgate-and-steinsgate-0)
+- [STEINS;GATE, STEINS;GATE 0, My Darling's Embrace, Linear Bounded Phenogram](#steinsgate-steinsgate-0-my-darlings-embrace-linear-bounded-phenogram)
 - [ROBOTICS;NOTES ELITE and ROBOTICS;NOTES DaSH](#roboticsnotes-elite-and-roboticsnotes-dash)
 - [ANONYMOUS;CODE](#anonymouscode)
 
@@ -27,7 +27,7 @@ Patched Chaos;Child screen:
 
 ![The patched C;C title screen](/assets/verify/choccybestboy.jpg "No noids.")
 
-## STEINS;GATE and STEINS;GATE 0
+## STEINS;GATE, STEINS;GATE 0, My Darling's Embrace, Linear Bounded Phenogram
 
 These don't have any immediate tells except for the font being noticeably more readable, which might not be much help if you're not already familiar with how the unpatched font looks.
 
