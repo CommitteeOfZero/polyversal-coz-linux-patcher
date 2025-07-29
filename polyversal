@@ -4,7 +4,7 @@
 
 # Script version, used to check if out-of-date.
 # Update this when creating a new release.
-readonly VERSION=2.2.2
+readonly VERSION=2.3.0
 
 progname="$(basename "$0")"
 readonly progname
