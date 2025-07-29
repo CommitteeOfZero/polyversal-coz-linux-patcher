@@ -64,6 +64,7 @@ Game abbreviations:
   chn
   sg
   sge
+  mde
   rne
   lbp
   cc
@@ -405,15 +406,16 @@ function set_game() {
     arg_game=$(zenity --list --radiolist --title "$2" \
         --height 400 --width 600                      \
         --column "Select" --column "Title"            \
-        TRUE  'CHAOS;HEAD NOAH'                       \
-        FALSE 'STEINS;GATE'                           \
-        FALSE 'STEINS;GATE ELITE'                     \
-        FALSE 'ROBOTICS;NOTES ELITE'                  \
-        FALSE 'STEINS;GATE: Linear Bounded Phenogram' \
-        FALSE 'CHAOS;CHILD'                           \
-        FALSE 'STEINS;GATE 0'                         \
-        FALSE 'ROBOTICS;NOTES DaSH'                   \
-        FALSE 'ANONYMOUS;CODE')
+        TRUE  "CHAOS;HEAD NOAH"                       \
+        FALSE "STEINS;GATE"                           \
+        FALSE "STEINS;GATE ELITE"                     \
+        FALSE "STEINS;GATE: My Darling's Embrace"     \
+        FALSE "ROBOTICS;NOTES ELITE"                  \
+        FALSE "STEINS;GATE: Linear Bounded Phenogram" \
+        FALSE "CHAOS;CHILD"                           \
+        FALSE "STEINS;GATE 0"                         \
+        FALSE "ROBOTICS;NOTES DaSH"                   \
+        FALSE "ANONYMOUS;CODE")
     local zen_ret=$?
     log_debug "zen_ret for set_game = $zen_ret"
     case $zen_ret in
@@ -448,6 +450,12 @@ function set_game() {
       patch_exe='SGEPatch-Installer.exe'
       gamename="STEINS;GATE ELITE"
       gamecode=sge
+      ;;
+    'mde' | 'sgmde' | "steins"[\;\ ]"gate: my darling's embrace")
+      appid=970560
+      patch_exe='SGMDEPatch-Installer.exe'
+      gamename="STEINS;GATE: My Darling's Embrace"
+      gamecode=mde
       ;;
     'rne' | 'rn' | 'robotics'[\;\ ]'notes elite')
       appid=1111380
@@ -587,7 +595,12 @@ function apply_launcherfix() {
   # usage: apply_launcherfix <gamecode>
 
   local gamecode=$1
-  [[ ! ($gamecode == sg || $gamecode == cc || $gamecode == sg0 || $gamecode == lbp) ]] && return 0
+  case $gamecode in
+    # allow these gamecodes, they need the fix
+    sg | cc | sg0 | lbp | mde) ;;
+    # reject all else
+    *) return 0 ;;
+  esac
 
   log_info "fixing $gamecode launcher issue ..."
   if ! pushd "$gamedir"; then
@@ -598,7 +611,7 @@ function apply_launcherfix() {
 
   local defaultlauncher
   case $gamecode in
-    sg | lbp) defaultlauncher=Launcher.exe  ;;
+    sg | lbp | mde) defaultlauncher=Launcher.exe  ;;
     cc | sg0) defaultlauncher=launcher.exe  ;;
     *)
       log_error "$gamecode does not have a launcherfix applied. how did you do this?"
@@ -629,7 +642,10 @@ function undo_launcherfix() {
   # usage: undo_launcherfix <gamecode>
 
   local gamecode=$1
-  [[ ! ($gamecode == sg || $gamecode == cc || $gamecode == sg0 || $gamecode == lbp) ]] && return 0
+  case $gamecode in
+    sg | cc | sg0 | lbp | mde) ;;
+    *) return 0 ;;
+  esac
 
   log_info "undoing $gamecode launcher fix ..."
   if ! pushd "$gamedir"; then
@@ -640,7 +656,7 @@ function undo_launcherfix() {
 
   local defaultlauncher
   case $gamecode in
-    sg | lbp) defaultlauncher=Launcher.exe  ;;
+    sg | lbp | mde) defaultlauncher=Launcher.exe  ;;
     cc | sg0) defaultlauncher=launcher.exe  ;;
     *)
       log_error "$gamecode does not have a launcherfix, nothing to undo. how?"
