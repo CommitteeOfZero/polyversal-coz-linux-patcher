@@ -1,4 +1,7 @@
-# General Information
+# Detailed Information for Linux Nerds
+
+> [!WARNING]
+> If you're simply trying to install a patch on Steam Deck/SteamOS, ***you are in the wrong place!*** This is a (scary) technical page on the script's inner workings. You should head over to [the README](/README.md) instead.
 
 This is a more detailed page on what the PLSPftCoZSASPoL does and exactly how to get it working on Linux systems in general, not just the Steam Deck. It is written with the assumption that the reader has a general understanding of how to work with Linux and the command line.
 
