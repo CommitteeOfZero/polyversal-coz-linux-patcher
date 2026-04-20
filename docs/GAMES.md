@@ -3,11 +3,13 @@
 Below is a table with relevant information for each game that currently has a patch available.
 
 > [!NOTE]
-> The `Proton Version` column in the table below is simply the last Proton version on which the game was verified to work. It is not a strict requirement, and later versions or the latest Experimental may or may not work just fine; however, if you run into issues with a patch, do be sure to try the Proton version given here before seeking further help.
+> The `Proton Version` column in the table below is simply the last version on which the game was verified to work and is *not* a strict requirement; in fact, the most recent version available (or Experimental) is probably your best bet.
+>
+> However, if you run into issues with installation, do be sure to try the Proton version given here before seeking further help.
 
 | **Game**                              | **Proton Version** | **Short Name** | **App ID** |
 |---------------------------------------|:------------------:|:--------------:|-----------:|
-| CHAOS;HEAD NOAH                       | 9                  | chn            | 1961950    |
+| CHAOS;HEAD NOAH                       | 10                 | chn            | 1961950    |
 | STEINS;GATE                           | 8                  | sg             | 412830     |
 | STEINS;GATE ELITE                     | 9                  | sge            | 819030     |
 | STEINS;GATE: My Darling's Embrace     | 9                  | mde            | 970560     |
