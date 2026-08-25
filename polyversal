@@ -226,8 +226,8 @@ function check_ptx() {
 
 ### Option Parsing ###
 
-longopts='help,verbose,log,steamroot:,force-flatpak,i-really-want-to-run-this-as-root-dont-question-me-boy'
-if ! parsed_args=$(getopt -n "$progname" -o 'hvr:F' --long "$longopts" -- "$@"); then
+longopts='help,verbose,log,steamroot:,force-flatpak,zenity-log,i-really-want-to-run-this-as-root-dont-question-me-boy'
+if ! parsed_args=$(getopt -n "$progname" -o 'hvr:FZ' --long "$longopts" -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage >&2
   exit 1
