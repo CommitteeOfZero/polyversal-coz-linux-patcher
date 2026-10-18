@@ -1,6 +1,9 @@
 # No individual logs
 /logs/
 
+# Release files created by testing `makerel.sh`
+/release/
+
 # In case the `trap`s in the script don't work
 acge-dl-TEMP-*
 curl-fifo-*
