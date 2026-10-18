@@ -1,9 +1,9 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types:
+      - published
 
 permissions:
   contents: write
@@ -12,13 +12,14 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build archives
         run: ./scripts/makerel.sh "$GITHUB_REF_NAME"
-      - name: Publish release
+      - name: Upload archives
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME"                    \
-            release/Polyversal-v"$GITHUB_REF_NAME".{zip,tar.gz}  \
-            --title "v$GITHUB_REF_NAME" --generate-notes
+          tag="$GITHUB_REF_NAME"
+          files=(release/Polyversal-v"$tag".{zip,tar.gz})
+
+          gh release upload "$tag" "${files[@]}" --clobber
