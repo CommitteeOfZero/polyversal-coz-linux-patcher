@@ -20,7 +20,7 @@ See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if anything goes wrong during
 
 1. **If you're patching Anonymous;Code,** [read here](/docs/AC.md) for some brief (but required) additional setup. Then return here and continue onto the next step.
 
-1. Download and install your target game from Steam, and within the game's Properties menu under Compatibility select its [required Proton version](/docs/GAMES.md).
+1. Download and install your target game from Steam, and within the game's Properties menu under Compatibility select the latest Proton version.[^proton]
 
    ![A gif of choosing Proton versions from a game's Properties menu](/assets/gif/props-proton.gif "Choosing a Proton version from R;NE's properties")
 
@@ -52,6 +52,8 @@ And that's it! You can close the terminal window that was opened once you're don
 
 Worry not! See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) for a list of common issues and how to proceed.
 
-------------
+---
 
 The Polyversal Linux Steam Patcher for the Committee of Zero's Science Adventure Steam Patches on Linux has been tested on Arch Linux, Fedora 37, and SteamOS 3.x. Any pull requests or feedback related to other distributions are especially appreciated.
+
+[^proton]: Or Experimental, if you're feeling frisky. Or an older version. Or your favorite GE-Proton. Hell, use NorthstarProton if it works. The vibe when it comes to Proton is not "use *this* version for *this* game," it's "use literally whatever (a) exists, and (b) makes your game work."

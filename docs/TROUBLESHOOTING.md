@@ -37,7 +37,9 @@ First, run Polyversal and choose 'Uninstall a Patch' followed by the game you wa
 
 Then, run Polyversal again and choose 'Nuke a Proton Prefix' followed by the same game.
 
-Lastly, make sure you have [the right Proton version set for your target game](/docs/GAMES.md). **Run the game once with the right Proton version** and then try reinstalling the patch.
+Lastly, you might consider using a different/newer Proton version, or [GE-Proton](https://github.com/gloriouseggroll/proton-ge-custom).
+
+Then try reinstalling the patch.
 
 ### Check the logs
 

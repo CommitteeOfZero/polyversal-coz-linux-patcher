@@ -23,7 +23,6 @@ The foundations of this script are largely built upon [u/PartTimeBento's seminal
 - `<game name>` is the game's [shortname identifier](/docs/GAMES.md)
 - `<patch dir>` is the path to the extracted CoZ patch directory
 - Either [Flatpak](https://flatpak.org/setup/) or a system install of [Protontricks](https://github.com/Matoking/protontricks#installation) >= 1.10.1 is required
-- Be sure to set [the right Proton version](/docs/GAMES.md)
 - [See here](#command-line-options) for CLI options
 
 ## Table of Contents
@@ -52,7 +51,7 @@ The foundations of this script are largely built upon [u/PartTimeBento's seminal
 
 1. Download and install your target game from Steam.
 
-1. Within the game's Properties menu, set its compatibility tool to [its required Proton version](/docs/GAMES.md).
+1. Select a Proton version. The latest should suffice, or Experimental, or GE-Proton. Take your pick.
 
 1. **Run the game at least once** to generate a Proton prefix.
 

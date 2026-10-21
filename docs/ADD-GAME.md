@@ -13,6 +13,6 @@ This page acts as a quick index/checklist to run through when these momentous oc
     - [ ] Add to switch case setting game vars
   - [ ] `default_launchers` - Add mapping if launcherfix is needed
 - [ ] `docs/GAMES.md`
-  - [ ] Add new table row for the game with the latest working Proton version
+  - [ ] Add new table row for the game
 - [ ] `docs/VERIFY.md`
   - [ ] Add section or update existing section with how to check that the game's patch is applied
