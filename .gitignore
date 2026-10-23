@@ -8,3 +8,8 @@
 acge-dl-TEMP-*
 curl-fifo-*
 protonge-anonymouscode
+
+# PKGBUILD generation remnants
+/PKGBUILD
+/*.tar.gz
+/*.tar.zst
