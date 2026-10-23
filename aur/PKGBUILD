@@ -1,0 +1,35 @@
+# Maintainer: Macitron <macitron3000@gmail.com>
+
+pkgname='polyversal-patcher'
+pkgver=2.3.1    # will be updated in pipeline action
+pkgrel=1
+pkgdesc="A utility script for installing Committee of Zero patches for Science Adventure titles"
+arch=('any')
+url="https://github.com/CommitteeOfZero/polyversal-coz-linux-patcher"
+license=('MIT')
+depends=('bash' 'curl' 'protontricks' 'zenity' 'xdg-utils')
+optdepends=('flatpak: fall back on Flatpak Protontricks in case of system Protontricks failure')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/$pkgver.tar.gz")
+_srcdir="polyversal-coz-linux-patcher-$pkgver"
+b2sums=('SKIP')  # filled in by updpkgsums in pipeline
+
+prepare() {
+    cd "$_srcdir"
+
+    # Store data in ~/.local/share rather than the script's local directory,
+    # as you might if you just download the tarball
+    sed -i 's|^DATADIR=.*|DATADIR=${XDG_DATA_HOME:-$HOME/.local/share}/polyversal-patcher|' ./polyversal
+}
+
+package() {
+    cd "$_srcdir"
+
+    # Binary, license
+    install -Dm755 ./polyversal "$pkgdir/usr/bin/polyversal"
+    install -Dm644 ./LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+    # Documentation
+    local _docdir="$pkgdir/usr/share/doc/$pkgname"
+    install -Dm644 ./README.md "$_docdir/README.md"
+    cp -r ./docs "$_docdir/"
+}
