@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  upload-archives:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -23,3 +23,22 @@ jobs:
           files=(release/Polyversal-v"$tag".{zip,tar.gz})
 
           gh release upload "$tag" "${files[@]}" --clobber
+
+  publish-aur:
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Generate PKGBUILD
+        run: ./scripts/gen-pkgbuild.sh "$GITHUB_REF_NAME"
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v4.2.0
+        with:
+          pkgname: polyversal-patcher
+          pkgbuild: ./PKGBUILD
+          updpkgsums: true
+          test: true
+          commit_username: ${{ vars.AUR_USERNAME }}
+          commit_email: ${{ vars.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_PRIVATE_KEY }}
+          commit_message: Update to ${{ github.ref_name }}
