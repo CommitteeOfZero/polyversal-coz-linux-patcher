@@ -6,11 +6,11 @@ The Polyversal Patcher makes it easy to install this Proton version:
 
 1. Run the patcher by right-clicking (L2) on `polyversal` and selecting *Run In Konsole*.
 
-   ![A gif of how to run the script](/assets/gif/run-konsole.gif "Running the script")
+   ![A gif of how to run the script](/docs/assets/gif/run-konsole.gif "Running the script")
 
 1. Choose *Install custom A;C Proton* and follow the prompts.
 
-   ![Selecting the A;C Proton installation](/assets/gif/ac-proton.gif "Starting the custom Proton install process")
+   ![Selecting the A;C Proton installation](/docs/assets/gif/ac-proton.gif "Starting the custom Proton install process")
 
    - **Note**: this file is a bit large and may take a while to download, depending on your internet speed.
 

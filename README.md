@@ -14,7 +14,7 @@ See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if anything goes wrong during
 
 1. Extract both of these files.
 
-   ![A gif of extracting the script and CoZ patch](/assets/gif/unzip.gif "Unzipping the archives")
+   ![A gif of extracting the script and CoZ patch](/docs/assets/gif/unzip.gif "Unzipping the archives")
 
    - **Note**: opening and extracting the CoZ patch might take some time. This GIF has been edited for brevity.
 
@@ -22,7 +22,7 @@ See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if anything goes wrong during
 
 1. Download and install your target game from Steam, and within the game's Properties menu under Compatibility select the latest Proton version.[^proton]
 
-   ![A gif of choosing Proton versions from a game's Properties menu](/assets/gif/props-proton.gif "Choosing a Proton version from R;NE's properties")
+   ![A gif of choosing Proton versions from a game's Properties menu](/docs/assets/gif/props-proton.gif "Choosing a Proton version from R;NE's properties")
 
 1. Run the game at least once. Reaching the launcher and then pressing `Quit Game` is sufficient for this; if the game lacks a dedicated launcher, then wait for the game window to appear before quitting.
 
@@ -30,11 +30,11 @@ See [TROUBLESHOOTING.md](/docs/TROUBLESHOOTING.md) if anything goes wrong during
 
 1. Run this script by right-clicking (L2) on `polyversal` and selecting *Run In Konsole*.
 
-   ![A gif of how to run the script](/assets/gif/run-konsole.gif "Running the script")
+   ![A gif of how to run the script](/docs/assets/gif/run-konsole.gif "Running the script")
 
 1. Enter which game you're patching and the extracted folder containing the CoZ patch. The actual patcher should launch; this might take some time.
 
-   ![A gif of choosing the patch directory](/assets/gif/choose.gif "Choosing the game + patch directory")
+   ![A gif of choosing the patch directory](/docs/assets/gif/choose.gif "Choosing the game + patch directory")
 
 1. Follow the instructions in the CoZ patch installer.
 

@@ -61,7 +61,7 @@ If you find that another game has this issue, you can manually fix it by backing
 
 Some issues can be solved by explicitly running the script from the command line. To do so, first open a terminal in the directory containing the script. On KDE and Steam Deck, you can do so by right-clicking on `polyversal` from within the file browser and selecting "Open Terminal Here".
 
-![Image of the "Open Terminal Here" dialog.](/assets/open-term-here.png)
+![Image of the "Open Terminal Here" dialog.](/docs/assets/open-term-here.png)
 
 Once the terminal is open, simply invoke it by typing the below command and hitting Enter:
 
@@ -83,7 +83,7 @@ Be sure to include the trailing space, and replace `<GAME>` with the [abbreviati
 
 Then, click and drag the CoZ patch folder from the file browser onto the terminal and hit Enter. Hopefully the script runs successfully at this point and you are met with the patch launcher.
 
-![A gif demonstrating how to run the script in CLI mode](/assets/gif/cli.gif "Fish is objectively the best shell, but I like zsh")
+![A gif demonstrating how to run the script in CLI mode](/docs/assets/gif/cli.gif "Fish is objectively the best shell, but I like zsh")
 
 For other script actions besides installing a patch, e.g. nuking a prefix or installing the A;C Proton build, see [the full docs on the CLI mode](/docs/GENERAL-INFO.md#cli).
 

@@ -79,7 +79,7 @@ Once launched, some selection pop-ups will appear with more windows showing up t
 
 You'll know the script has started successfully when you see a window similar to the following:
 
-![Image of a Zenity list selection.](/assets/first-screen.png "The first window")
+![Image of a Zenity list selection.](/docs/assets/first-screen.png "The first window")
 
 ### CLI
 
@@ -114,7 +114,7 @@ The following info is pertinent regardless of how you launched the script.
 
 - During execution, a GUI for the actual patch installer should launch. Follow the instructions in the interface to install the patch.
 
-    ![Image of the actual CoZ patcher GUI.](/assets/coz-gui.png "Still gotta finish this game")
+    ![Image of the actual CoZ patcher GUI.](/docs/assets/coz-gui.png "Still gotta finish this game")
 
   - If asked for an installation directory by the installer, use `Z:/home/<Username>/.local/share/Steam/steamapps/common/<Game>`, replacing &lt;Username&gt; with your Linux username and &lt;Game&gt; with the name of the folder containing the game. For example, Chaos;Head NoAH on the Steam Deck would be `Z:/home/deck/.local/share/Steam/steamapps/common/CHAOS;HEAD NOAH`.
 

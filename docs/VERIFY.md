@@ -21,11 +21,11 @@ If the splash text on the title screen for these games has the word "noids" in i
 
 Patched Chaos;Head NoAH screen:
 
-![The patched C;HN title screen](/assets/verify/nonoids.jpg "No noids?")
+![The patched C;HN title screen](/docs/assets/verify/nonoids.jpg "No noids?")
 
 Patched Chaos;Child screen:
 
-![The patched C;C title screen](/assets/verify/choccybestboy.jpg "No noids.")
+![The patched C;C title screen](/docs/assets/verify/choccybestboy.jpg "No noids.")
 
 ## STEINS;GATE, STEINS;GATE 0, My Darling's Embrace, Linear Bounded Phenogram
 
@@ -33,11 +33,11 @@ These don't have any immediate tells except for the font being noticeably more r
 
 The patched font:
 
-![S;G with the better font](/assets/verify/much-better.png "Lookin good.")
+![S;G with the better font](/docs/assets/verify/much-better.png "Lookin good.")
 
 The unpatched font:
 
-![S;G with the vanilla font](/assets/verify/ow-my-eyes.png "Ow, my eyes.")
+![S;G with the vanilla font](/docs/assets/verify/ow-my-eyes.png "Ow, my eyes.")
 
 Alternatively, you can idle on the title screen (before you "Press Any Button") and wait for the opening movie to play. The game is **patched** if the song has subtitles, provided you didn't disable them in the game's launcher.
 
