@@ -2,9 +2,11 @@
 
 ### Constants ###
 
-# Script version, used to check if out-of-date.
-# Update this when creating a new release.
-readonly VERSION=2.3.1
+# Don't edit this! Used for checking for update checks, but we only want to run that check when the
+# script is downloaded from GitHub releases. To that end, this value is updated as part of the
+# release creation script (scripts/makerel.sh). For other runs (i.e. git clone and AUR), we don't
+# want to run the check at all.
+readonly VERSION=dev
 
 progname="$(basename "$0")"
 readonly progname
@@ -870,6 +872,12 @@ function uninstall_patch() {
 function check_update() {
 
   # usage: check_update
+
+  # We really only want to check for updated versions when this is downloaded as a release archive
+  if [[ $VERSION == 'dev' ]]; then
+    log_debug "skipping update check, not a release build (version = 'dev')"
+    return 0
+  fi
 
   local curl_out
   if ! curl_out=$(
