@@ -34,8 +34,10 @@ rm -rf "${release_dir}"{,.zip,.tar.gz}
 mkdir -p "${release_dir}"
 cp -r --parents "${release_files[@]}" "${release_dir}"
 
-# Stamp the real version into the archived script so it can check for updates
-sed -i "s/^readonly VERSION=.*/readonly VERSION=${version}/" "${release_dir}/polyversal"
+# Stamp the real version and channel into the archived script so it can check for updates
+sed -i -e "s/^readonly VERSION=.*/readonly VERSION=${version}/" \
+       -e "s/^readonly CHANNEL=.*/readonly CHANNEL=release/"    \
+       "${release_dir}/polyversal"
 
 # Make both archives from inside `release/` so paths start at ${name}/
 (cd release && zip -r "${name}.zip" "${name}")

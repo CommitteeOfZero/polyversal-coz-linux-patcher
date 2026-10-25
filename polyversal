@@ -2,11 +2,14 @@
 
 ### Constants ###
 
-# Don't edit this! Used for checking for update checks, but we only want to run that check when the
-# script is downloaded from GitHub releases. To that end, this value is updated as part of the
-# release creation script (scripts/makerel.sh). For other runs (i.e. git clone and AUR), we don't
-# want to run the check at all.
+# Don't edit these! They're only meant to be changed in pipelines, e.g. by scripts/makerel.sh for
+# GitHub releases and by the PKGBUILD for the AUR. Git clones keep the placeholders, which is what
+# we want.
+# - VERSION contains the release version
+# - CHANNEL describes what environment the script is being used in
+#   - Especially useful for avoiding version update checks for AUR installs
 readonly VERSION=dev
+readonly CHANNEL=git  # git | release | aur
 
 progname="$(basename "$0")"
 readonly progname
@@ -39,9 +42,20 @@ readonly AC_PROTON_DIRNAME='protonge-anonymouscode'
 
 function print_usage() {
   cat << EOF
-usage: polyversal [ -v | --verbose ] [ -h | --help ] [ --log ]
-                  [ -r | --steamroot ] [ -F | --force-flatpak ] ...
+usage: polyversal [ -v | --verbose ] [ -h | --help ] [ -V | --version ]
+                  [ --log ] [ -r | --steamroot ] [ -F | --force-flatpak ] ...
 EOF
+}
+
+function print_version() {
+  local ver=$VERSION
+
+  # Git clones never get a real VERSION, so ask git where we are instead
+  if [[ $CHANNEL == 'git' ]]; then
+    ver=$(git -C "$(dirname "$0")" describe --tags --always --dirty 2>/dev/null) || ver=$VERSION
+  fi
+
+  echo "$progname $ver ($CHANNEL)"
 }
 
 function long_usage() {
@@ -82,8 +96,11 @@ options:
   -v, --verbose
           Enable debug logging.
 
+  -V, --version
+          Print the current script version and exit.
+
   --log   Copy terminal output to a new file log in 'logs'. Disables terminal
-          colors
+          colors.
 
   -r, --steamroot NEW_ROOT
           Use NEW_ROOT as Steam's root directory instead of '~/.local/share/Steam'.
@@ -229,8 +246,8 @@ function check_ptx() {
 
 ### Option Parsing ###
 
-longopts='help,verbose,log,steamroot:,force-flatpak,zenity-log,i-really-want-to-run-this-as-root-dont-question-me-boy'
-if ! parsed_args=$(getopt -n "$progname" -o 'hvr:FZ' --long "$longopts" -- "$@"); then
+longopts='help,verbose,version,log,steamroot:,force-flatpak,zenity-log,i-really-want-to-run-this-as-root-dont-question-me-boy'
+if ! parsed_args=$(getopt -n "$progname" -o 'hvVr:FZ' --long "$longopts" -- "$@"); then
   log_fatal "error parsing command line arguments"
   print_usage >&2
   exit 1
@@ -250,6 +267,9 @@ while true; do
       shift ;;
     -h | --help)
       long_usage
+      exit 0  ;;
+    -V | --version)
+      print_version
       exit 0  ;;
     --log)
       opt_filelog=true
@@ -874,8 +894,8 @@ function check_update() {
   # usage: check_update
 
   # We really only want to check for updated versions when this is downloaded as a release archive
-  if [[ $VERSION == 'dev' ]]; then
-    log_debug "skipping update check, not a release build (version = 'dev')"
+  if [[ $CHANNEL != 'release' ]]; then
+    log_debug "skipping update check, not a release build (channel = '$CHANNEL')"
     return 0
   fi
 

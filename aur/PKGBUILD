@@ -19,6 +19,11 @@ prepare() {
     # Store data in ~/.local/share rather than the script's local directory,
     # as you might if you just download the tarball
     sed -i 's|^DATADIR=.*|DATADIR=${XDG_DATA_HOME:-$HOME/.local/share}/polyversal-patcher|' ./polyversal
+
+    # Stamp in the version for --version. The 'aur' channel skips the update check
+    sed -i -e "s/^readonly VERSION=.*/readonly VERSION=$pkgver/"    \
+           -e "s/^readonly CHANNEL=.*/readonly CHANNEL=aur/"        \
+           ./polyversal
 }
 
 package() {
