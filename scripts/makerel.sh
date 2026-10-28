@@ -13,7 +13,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Files to actually include in the archives
-release_files=(polyversal README.md LICENSE docs/)
+release_files=(polyversal README.md LICENSE docs/*.md)
 
 version=${1#v}  # vX.Y.Z -> X.Y.Z
 
