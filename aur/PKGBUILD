@@ -9,8 +9,8 @@ url="https://github.com/CommitteeOfZero/polyversal-coz-linux-patcher"
 license=('MIT')
 depends=('bash' 'curl' 'protontricks' 'zenity' 'xdg-utils')
 optdepends=('flatpak: fall back on Flatpak Protontricks in case of system Protontricks failure')
-source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/$pkgver.tar.gz")
-_srcdir="polyversal-coz-linux-patcher-$pkgver"
+source=("git+$url.git#tag=$pkgver")
+_srcdir="polyversal-coz-linux-patcher"
 b2sums=('SKIP')  # filled in by updpkgsums in pipeline
 
 prepare() {
